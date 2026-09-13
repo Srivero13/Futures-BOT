@@ -11,7 +11,7 @@ def report(path):
     meta=db.execute('SELECT config FROM metadata WHERE id=1').fetchone()
     config=json.loads(meta[0]) if meta else {}
     db.close()
-    if not rows: return {'status':'sin datos'}
+    if not rows: return {'status':'no data'}
     # Initial capital reconstructs first event before fill using event cost and equity mark.
     # Require explicit initial capital from CLI, since old ledger does not persist original config.
     return rows,config
@@ -22,7 +22,7 @@ def main():
     if isinstance(data,dict): print(json.dumps(data));return
     rows,config=data
     if config.get('initial_cash') != a.initial_capital:
-        raise ValueError('Capital inicial no coincide con el libro')
+        raise ValueError('Initial capital does not match the ledger')
     if isinstance(rows,dict): print(json.dumps(rows));return
     total=rows[-1][5]-a.initial_capital
     elapsed=rows[-1][0]-rows[0][0]

@@ -23,9 +23,9 @@ def http_json(url, method='GET', headers=None, body=None):
             return json.load(response), response.headers
     except error.HTTPError as exc:
         # Do not log headers, response bodies, or credentials.
-        raise RuntimeError(f'HTTP {exc.code}; consulta permisos, límites o disponibilidad regional') from None
+        raise RuntimeError(f'HTTP {exc.code}; check permissions, limits, or regional availability') from None
     except (error.URLError, TimeoutError):
-        raise RuntimeError('Conexión no disponible; no se generó ninguna orden') from None
+        raise RuntimeError('Connection unavailable; no order was generated') from None
 
 
 def binance_quote(symbol):
@@ -33,7 +33,7 @@ def binance_quote(symbol):
     payload, _ = http_json('https://api.binance.com/api/v3/ticker/bookTicker?' +
                            parse.urlencode({'symbol': symbol}))
     if time.monotonic() - started > 5:
-        raise RuntimeError('Cotización recibida con más de 5 segundos de demora')
+        raise RuntimeError('Quote received with more than five seconds of delay')
     return float(payload['bidPrice']), float(payload['askPrice'])
 
 
@@ -42,7 +42,7 @@ def capital_probe():
     names = ['CAPITAL_API_KEY', 'CAPITAL_IDENTIFIER', 'CAPITAL_API_PASSWORD']
     values = {name: os.environ.get(name) for name in names}
     if not all(values.values()):
-        raise ValueError('Configura CAPITAL_API_KEY, CAPITAL_IDENTIFIER y CAPITAL_API_PASSWORD localmente')
+        raise ValueError('Set CAPITAL_API_KEY, CAPITAL_IDENTIFIER, and CAPITAL_API_PASSWORD locally')
     base = 'https://demo-api-capital.backend-capital.com/api/v1'
     _, headers = http_json(base + '/session', 'POST',
         {'X-CAP-API-KEY': values['CAPITAL_API_KEY']},
@@ -57,23 +57,23 @@ def capital_probe():
 
 def validate(c):
     if c.get('mode') != 'paper':
-        raise ValueError('Esta versión solo permite mode=paper')
+        raise ValueError('This version only permits mode=paper')
     if c.get('source') not in ('synthetic', 'binance_public'):
-        raise ValueError('Fuente no implementada')
+        raise ValueError('Source not implemented')
     if not isinstance(c.get('id'), str) or not c['id'].replace('-', '').replace('_', '').isalnum():
-        raise ValueError('ID inválido')
+        raise ValueError('Invalid ID')
     if not isinstance(c.get('symbol'), str) or not c['symbol'].isalnum():
-        raise ValueError('Símbolo inválido')
+        raise ValueError('Invalid symbol')
     for key in ('initial_cash', 'order_notional', 'max_spread_bps', 'poll_seconds'):
         if not isinstance(c.get(key), (int, float)) or not math.isfinite(c[key]) or c[key] <= 0:
-            raise ValueError('Parámetro positivo requerido: ' + key)
+            raise ValueError('Positive parameter required: ' + key)
     for key in ('fee_bps', 'slippage_bps'):
         if not isinstance(c.get(key), (int, float)) or not math.isfinite(c[key]) or not 0 <= c[key] < 10000:
-            raise ValueError('Coste inválido: ' + key)
+            raise ValueError('Invalid cost: ' + key)
     if not 0 < c.get('max_loss_fraction', 0) < 1:
-        raise ValueError('Límite de pérdida inválido')
+        raise ValueError('Invalid loss limit')
     if c['order_notional'] > c['initial_cash']:
-        raise ValueError('Importe mayor al capital simulado')
+        raise ValueError('Notional exceeds simulated capital')
     return c
 
 
@@ -93,7 +93,7 @@ class Ledger:
         row = self.db.execute('SELECT fingerprint FROM state WHERE id=1').fetchone()
         if row and row[0] != fingerprint:
             self.db.close()
-            raise ValueError('Configuración cambiada: usa un ID nuevo para una simulación distinta')
+            raise ValueError('Configuration changed: use a new ID for a different simulation')
         with self.db:
             self.db.execute('INSERT OR REPLACE INTO metadata VALUES(1,?)', (json.dumps(config, sort_keys=True),))
             self.db.execute('INSERT OR IGNORE INTO state VALUES(1, ?, 0, 0, 0, ?)',
@@ -104,9 +104,9 @@ class Ledger:
 
     def tick(self, bid, ask, signal):
         if signal not in ('BUY', 'SELL', 'HOLD'):
-            raise ValueError('Señal inválida')
+            raise ValueError('Invalid signal')
         if not all(math.isfinite(x) and x > 0 for x in (bid, ask)) or ask < bid:
-            raise ValueError('Cotización inválida')
+            raise ValueError('Invalid quote')
         c = self.c
         with self.db:
             cash, qty, halted, step = self.state()
@@ -170,7 +170,7 @@ def run_one(config, ticks):
     try:
         for _ in range(ticks) if ticks else iter(int, 1):
             if (ROOT / 'PAUSE').exists():
-                print(c['id'] + ': PAUSE presente; saliendo sin liquidar posiciones simuladas', flush=True)
+                print(c['id'] + ': PAUSE present; exiting without liquidating simulated positions', flush=True)
                 break
             try:
                 if c['source'] == 'synthetic':
@@ -189,9 +189,9 @@ def run_one(config, ticks):
             except (RuntimeError, ValueError, KeyError) as exc:
                 failures += 1
                 print(json.dumps({'bot': c['id'], 'error_type': type(exc).__name__,
-                                  'status': 'sin operación; reintento con espera'}), flush=True)
+                                  'status': 'no trade; retrying after backoff'}), flush=True)
                 if failures >= 5:
-                    raise RuntimeError('Cinco fallos consecutivos; proceso detenido') from None
+                    raise RuntimeError('Five consecutive failures; process stopped') from None
             time.sleep(min(60, c['poll_seconds'] * 2 ** failures))
     finally:
         book.db.close()
@@ -203,7 +203,7 @@ def main():
     sub = p.add_subparsers(dest='command', required=True)
     run = sub.add_parser('run')
     run.add_argument('--config', default='configs/two-paper.json')
-    run.add_argument('--ticks', type=int, default=0, help='0 ejecuta hasta Ctrl+C')
+    run.add_argument('--ticks', type=int, default=0, help='0 runs until Ctrl+C')
     sub.add_parser('capital-probe')
     sub.add_parser('binance-probe')
     args = p.parse_args()
@@ -213,10 +213,10 @@ def main():
         bid, ask = binance_quote('BTCUSDT')
         print(json.dumps({'source': 'binance_public', 'symbol': 'BTCUSDT', 'bid': bid, 'ask': ask})); return
     if args.ticks < 0:
-        p.error('--ticks debe ser >= 0')
+        p.error('--ticks must be >= 0')
     configs = json.loads(Path(args.config).read_text())['bots']
     if not configs or len({c['id'] for c in configs}) != len(configs):
-        raise ValueError('Debe haber bots con IDs únicos')
+        raise ValueError('Bots must have unique IDs')
     for c in configs:
         validate(c)
     workers = [mp.Process(target=run_one, args=(c, args.ticks), name=c['id']) for c in configs]
