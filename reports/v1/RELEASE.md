@@ -1,58 +1,58 @@
-# Informe 1.0 — 13 de septiembre de 2026
+# 1.0 report — September 13, 2026
 
-## Decisión
+## Decision
 
-Se entrega un motor de investigación/paper con mayor precisión contable y controles compartidos. No se habilitan entradas con los modelos incluidos: no hay evidencia de ventaja neta. No se puede elegir honestamente el timing óptimo para la PC ENTEL sin medir allí ni validar ejecución subminuto con datos de libro.
+This release provides a research/paper engine with more precise accounting and shared controls. Entries are disabled for the included models because there is no evidence of a net edge. Optimal timing for the ENTEL PC cannot honestly be selected without measurements there and subminute execution validation using order-book data.
 
-## Respuesta medida
+## Measured response
 
-Entorno de desarrollo, no PC del usuario. Dos series de 30 solicitudes REST públicas:
+Development environment, not the user's PC. Two series of 30 public REST requests:
 
-| Endpoint | Éxitos / intentos | Fallos | p50 de éxitos | p95/p99 de éxitos |
+| Endpoint | Successes / attempts | Failures | Successful-response p50 | Successful-response p95/p99 |
 |---|---:|---:|---:|---:|
-| Hora de Binance | 5 / 30 | 25 | 1831,89 ms | 3295,17 ms |
-| Mejor bid/ask BTC | 3 / 30 | 27 | 3407,80 ms | 3506,67 ms |
+| Binance server time | 5 / 30 | 25 | 1831.89 ms | 3295.17 ms |
+| BTC best bid/ask | 3 / 30 | 27 | 3407.80 ms | 3506.67 ms |
 
-Los percentiles con tres o cinco éxitos no son estimaciones fiables de las colas; además excluyen solicitudes fallidas. La decisión del perfil es **rechazado**, no ampliar tolerancias hasta aceptar una red mala. El timeout de urllib es por operación de socket: no garantiza una duración total máxima de dos segundos. No se midieron confirmaciones ni fills de órdenes.
+Percentiles from three or five successes are unreliable tail estimates and exclude failed requests. The profile is **rejected**; tolerances are not widened to accept a poor connection. The urllib timeout applies per socket operation and does not guarantee a two-second total deadline. No order acknowledgments or fills were measured.
 
-La observación WebSocket recibió 2230 mensajes en 30,00 s, con una reconexión por `WebSocketProxyException`. El p95 entre recepciones fue 53,39 ms: es interarribo, **no RTT ni latencia de ejecución**. No hubo medida válida de desfase de eventos ni de cómputo de órdenes en esa observación. Datos crudos: `latency-development.json` y `stream-development.json`.
+WebSocket observation received 2,230 messages in 30.00 seconds, with one reconnection caused by `WebSocketProxyException`. The p95 between receptions was 53.39 ms: this is interarrival time, **not RTT or execution latency**. This observation provided no valid event-lag or order-computation measurement. Raw data: `latency-development.json` and `stream-development.json`.
 
-Reglas elegidas: perfil local vigente, ≥30 éxitos por endpoint, fallos ≤5%, p99 ≤1000 ms y reloj con incertidumbre ≤250 ms; espaciar decisiones al menos `max(100, 2 p95)` ms, edad máxima de recepción `min(1000, max(250, 3 p99))` ms y horizonte al menos `max(60000, 20 p99)` ms. No son parámetros optimizados para beneficio. Se bloquean nuevas entradas al caducar el perfil durante una sesión.
+Chosen rules: a current local profile, ≥30 successes per endpoint, failures ≤5%, p99 ≤1000 ms, and clock uncertainty ≤250 ms; decision spacing at least `max(100, 2 p95)` ms, maximum receipt age `min(1000, max(250, 3 p99))` ms, and horizon at least `max(60000, 20 p99)` ms. These parameters are not profit-optimized. New entries are blocked when the profile expires during a session.
 
-Binance spot bookTicker publica mejores precios/cantidades en tiempo real, pero no incluye timestamp de evento E: la edad local de recepción no prueba frescura en origen. El stream de velas permite comprobar cierre y desfase; se exige calentamiento tras huecos. La librería gestiona ping/pong y el cliente reconecta. Referencia: [documentación oficial de WebSocket](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md).
+Binance spot bookTicker publishes best prices/quantities in real time but lacks event timestamp E: local receipt age cannot prove source freshness. The candle stream permits closure and lag checks; gaps require warmup. The library handles ping/pong and the client reconnects. Reference: [official WebSocket documentation](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md).
 
-`recvWindow` determina validez temporal de solicitudes firmadas; no es un objetivo de latencia ni una razón para sondear cada 5000 ms. No se firman solicitudes en esta versión. [REST oficial](https://developers.binance.com/en/docs/products/spot/rest-api).
+`recvWindow` determines temporal validity of signed requests; it is not a latency target or a reason to poll every 5000 ms. This version does not sign requests. [Official REST documentation](https://developers.binance.com/en/docs/products/spot/rest-api).
 
-## Modelo matemático
+## Mathematical model
 
-La contabilidad acepta cadenas decimales, rechaza float/NaN/infinito y usa precisión 50. Cantidad redondeada hacia abajo al paso permitido; comisión y deslizamiento en entrada y salida. [Decimal de Python](https://docs.python.org/3/library/decimal.html). Más dígitos no mejoran la capacidad de anticipar el mercado.
+Accounting accepts decimal strings, rejects float/NaN/infinity, and uses precision 50. Quantities round down to the permitted step; fees and slippage apply to both entry and exit. [Python Decimal](https://docs.python.org/3/library/decimal.html). More digits do not improve market prediction.
 
-Con ask A, bid B, comisión proporcional f y deslizamiento s, el crecimiento mínimo del bid para recuperar costes es:
+For ask A, bid B, proportional fee f, and slippage s, the minimum bid growth needed to recover costs is:
 
 `c = A (1+s) (1+f) / [B (1-s) (1-f)] - 1`.
 
-La etiqueta es retorno logarítmico, desde apertura posterior a la vela de señal hasta apertura h minutos después: `y = 10000 ln(P_salida / P_entrada)`. Se compara el pronóstico menos un margen de error con `10000 ln(1+c) + 2` bps logarítmicos; no se mezclan retorno simple y logarítmico. Las etiquetas futuras nunca entran al cálculo de indicadores.
+The label is log return from the opening after the signal candle to the opening h minutes later: `y = 10000 ln(P_exit / P_entry)`. The forecast minus an error buffer is compared with `10000 ln(1+c) + 2` log bps; simple and log returns are not mixed. Future labels never enter indicator calculations.
 
-Ridge utiliza retorno de un minuto, momentum 5/20, volatilidad 20, volumen relativo y rango de vela. Se normaliza solo con ajuste; coeficientes mediante mínimos cuadrados aumentados con regularización L2 (alpha 10) resueltos por SVD, sin invertir X'X. [Definición oficial de Ridge](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html). Estadística float64; dinero Decimal.
+Ridge uses one-minute return, 5/20 momentum, 20-period volatility, relative volume, and candle range. Normalization uses fitting data only; coefficients use augmented least squares with L2 regularization (alpha 10), solved by SVD without inverting X'X. [Official Ridge definition](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html). Statistics use float64; money uses Decimal.
 
-La calibración estima percentil unilateral 90% del error de sobrepredicción, tomando muestras separadas h minutos. No es probabilidad de beneficio ni garantía de cobertura con dependencia temporal. Datos a más de ocho desviaciones del entrenamiento se rechazan. Escalado, horizonte y validación temporal quedan separados; se purgan etiquetas que cruzan límites. [Separación temporal con gap](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html).
+Calibration estimates the one-sided 90th percentile of overprediction error, using samples h minutes apart. This is neither a probability of profit nor a coverage guarantee under temporal dependence. Inputs more than eight training standard deviations away are rejected. Scaling, horizon selection, and temporal validation remain separate; labels crossing boundaries are purged. [Temporal splitting with a gap](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html).
 
-## Protocolo y resultados
+## Protocol and results
 
-Datos oficiales spot BTC/ETH, 131.040 velas de un minuto por símbolo, abril–junio 2025. Abril: 80% ajuste y 20% calibración. Mayo: comparar horizontes 1, 3 y 5 minutos. Junio: evaluación posterior sin volver a ajustar. Manifiesto de archivos y SHA-256 en `datasets/manifest-v1.json`; descarga mediante `download_v1_data.py`.
+Official BTC/ETH spot data: 131,040 one-minute candles per symbol, April–June 2025. April: 80% fitting and 20% calibration. May: compare 1-, 3-, and 5-minute horizons. June: subsequent evaluation without refitting. File manifest and SHA-256 are in `datasets/manifest-v1.json`; download with `download_v1_data.py`.
 
-Los tres horizontes empataron en mayo sin operaciones. El artefacto conserva 1 minuto por orden de desempate, **no porque sea el mejor timing**. Promoción exige mayo con beneficio neto, al menos 30 cierres y RMSE de calibración menor que pronóstico cero; no se cumple. Los modelos históricos también caducan para paper actual.
+All three horizons tied in May without trades. The artifact retains one minute by tie-breaking order, **not because it is the best timing**. Promotion requires positive May net profit, at least 30 closed trades, and calibration RMSE below a zero forecast; these conditions fail. The historical models are also expired for current paper trading.
 
-En junio los modelos no operan en escenarios de 50, 250 y 1000 ms, ni con costes aumentados. Resultado neto y comisiones: cero. Es abstención, no prueba de rentabilidad ni mejora predictiva frente a la versión anterior. La referencia momentum, con los mismos límites, pierde aproximadamente 50,18 USDT en BTC y 50,14 en ETH por cada 1000 virtuales; queda bloqueada por drawdown. No es una comparación directa con la estrategia v0.2, que empleaba otro periodo/frecuencia.
+In June the models do not trade under 50, 250, or 1000 ms scenarios, including increased costs. Net result and fees: zero. This is abstention, not evidence of profitability or predictive improvement over the previous version. The momentum reference, with the same limits, loses approximately 50.18 USDT for BTC and 50.14 for ETH per virtual 1,000; drawdown blocks it. This is not a direct comparison with the v0.2 strategy, which used a different period/frequency.
 
-Las comisiones base supuestas son 10 bps por lado, deslizamiento 2 bps y spread 2 bps; estrés 15/5/10. Un término de volatilidad previa por raíz del tiempo aumenta el spread en escenarios de latencia: es sensibilidad sintética, no reconstrucción de ejecución real. Fills completos, liquidez abundante sintética y ausencia de cola limitan el estudio. No incluye electricidad, impuestos, funding ni costes de futuros. No se puede extraer PnL observado por segundo a partir de velas de un minuto; se entrega exclusivamente promedio normalizado por segundo, junto a PnL horario agregado.
+Assumed base fees are 10 bps per side, slippage 2 bps, and spread 2 bps; stress uses 15/5/10. Previous volatility multiplied by the square root of time widens the spread in latency scenarios: this is synthetic sensitivity, not reconstructed execution. Full fills, abundant synthetic liquidity, and no queue modeling limit the study. Electricity, taxes, funding, and futures costs are excluded. Observed per-second PnL cannot be extracted from one-minute candles; only a normalized per-second average and aggregated hourly PnL are supplied.
 
-En el escenario base, el p99 del cálculo de señal fue 0,03194 ms para BTC y 0,04282 ms para ETH. Mide solo inferencia, no lectura de red, SQLite, envío ni ejecución de órdenes. Los RMSE de calibración (BTC 4,52961 y ETH 8,05565 bps logarítmicos) fueron ligeramente peores que predecir cero (4,52302 y 8,04770).
+In the base scenario, signal-computation p99 was 0.03194 ms for BTC and 0.04282 ms for ETH. This measures inference only, excluding network reads, SQLite, order submission, and execution. Calibration RMSE (BTC 4.52961 and ETH 8.05565 log bps) was slightly worse than predicting zero (4.52302 and 8.04770).
 
-Consulta `evaluation.json` para cifras exactas, métricas por caso, RMSE y tiempos de cómputo medidos en este entorno. Los registros detallados se regeneran con `train_v1.py`. Los datos son históricos, no un diagnóstico del mercado de septiembre de 2026.
+See `evaluation.json` for exact figures, per-case metrics, RMSE, and computation timings from this environment. Detailed logs are regenerated with `train_v1.py`. These are historical data, not a diagnosis of the September 2026 market.
 
-## Validación y alcance
+## Validation and scope
 
-43 pruebas automatizadas, incluyendo 21 anteriores y 22 nuevas: contabilidad exacta, coste de equilibrio, cuantización, reinicio/idempotencia, límite global, bloqueo de segunda cuenta al incurrir en costes, rechazo de quotes atrasadas/futuras, rollback, drawdown persistente, horizonte por cuenta, modelos íntegros, causalidad y separación del holdout. La prueba de autenticación demo de la suite anterior utiliza mocks; no demuestra conexión a una cuenta privada.
+43 automated tests, including 21 previous and 22 new tests: exact accounting, break-even cost, quantization, restart/idempotency, global cap, second-account blocking after costs, stale/future quote rejection, rollback, persistent drawdown, per-account horizon, model integrity, causality, and holdout separation. The previous suite's demo authentication test uses mocks and does not demonstrate private-account connectivity.
 
-Se verificó conexión pública WebSocket de corta duración. No se validó funcionamiento continuo, ni PC i7, ni Windows, ni red ENTEL. Dos libros virtuales no equivalen a dos cuentas de exchange autenticadas. No hay ruta para enviar órdenes reales. Antes de desarrollar ejecución financiera hace falta una estrategia validada, datos subminuto, pruebas testnet y reconciliación robusta. La etiqueta 1.0 identifica esta entrega de software; no certifica aptitud para capital real.
+A short public WebSocket connection was verified. Continuous operation, the i7 PC, Windows, and ENTEL were not validated. Two virtual ledgers are not two authenticated exchange accounts. There is no real-order submission path. Financial execution development requires a validated strategy, subminute data, testnet testing, and robust reconciliation. The 1.0 label identifies this software release; it does not certify suitability for real capital.

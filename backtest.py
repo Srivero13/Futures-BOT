@@ -34,20 +34,20 @@ class Params:
     def validate(self):
         for k,v in asdict(self).items():
             if k != 'qty_step' and (not math.isfinite(v) or v < 0):
-                raise ValueError('Parámetro inválido: '+k)
+                raise ValueError('Invalid parameter: '+k)
         if not (0 < self.capital and 0 < self.notional <= self.capital):
-            raise ValueError('Capital/notional inválido')
+            raise ValueError('Invalid capital/notional')
         if not 0 < self.max_drawdown < 1 or not 0 < self.daily_loss < 1:
-            raise ValueError('Límites inválidos')
+            raise ValueError('Invalid limits')
         if not 1 <= self.fast < self.slow:
-            raise ValueError('Ventanas inválidas')
+            raise ValueError('Invalid windows')
         for k in ('fast','slow','max_entries_day','cooldown_bars'):
             if type(getattr(self,k)) is not int:
-                raise ValueError('Se requiere entero: '+k)
+                raise ValueError('Integer required: '+k)
         if max(self.fee_bps,self.slippage_bps,self.spread_bps) >= 1000:
-            raise ValueError('Costes fuera de rango')
+            raise ValueError('Costs out of range')
         if not D(self.qty_step).is_finite() or D(self.qty_step) <= 0:
-            raise ValueError('Paso inválido')
+            raise ValueError('Invalid step')
         return self
 
 
@@ -61,24 +61,24 @@ def read_candles(path):
 
 def validate_candles(rows):
     if not rows:
-        raise ValueError('Sin velas')
+        raise ValueError('No candles')
     last = None
     for r in rows:
         ts = r['timestamp']
         if type(ts) is not int or ts % 300 or (last is not None and ts-last != 300):
-            raise ValueError('Velas 5m duplicadas, fuera de orden o con huecos')
+            raise ValueError('Duplicate, out-of-order, or gapped 5m candles')
         vals = [r[k] for k in ('open','high','low','close','volume')]
         if not all(math.isfinite(x) for x in vals) or min(vals[:4])<=0 or vals[4]<0:
-            raise ValueError('OHLCV inválido')
+            raise ValueError('Invalid OHLCV')
         if r['low']>min(r['open'],r['close']) or r['high']<max(r['open'],r['close']):
-            raise ValueError('OHLC incoherente')
+            raise ValueError('Inconsistent OHLC')
         last=ts
 
 
 def signal(history, p, strategy):
     if strategy == 'cash': return False
     if strategy == 'hold': return True
-    if strategy != 'sma': raise ValueError('Estrategia desconocida')
+    if strategy != 'sma': raise ValueError('Unknown strategy')
     if len(history)<p.slow: return False
     fast = statistics.mean(history[-p.fast:])
     slow = statistics.mean(history[-p.slow:])

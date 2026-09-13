@@ -26,7 +26,7 @@ def main():
             expected = fetch(url + '.CHECKSUM').decode().split()[0]
             actual = hashlib.sha256(blob).hexdigest()
             if expected != actual:
-                raise ValueError('Checksum inválido: ' + name)
+                raise ValueError('Checksum mismatch: ' + name)
             with zipfile.ZipFile(io.BytesIO(blob)) as z:
                 content = z.read(name.replace('.zip', '.csv')).decode()
             for r in csv.reader(io.StringIO(content)):

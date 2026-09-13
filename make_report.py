@@ -1,4 +1,4 @@
-"""Build the reproducible Spanish results report from exported backtests."""
+"""Build the reproducible English results report from exported backtests."""
 import csv
 import json
 from pathlib import Path
@@ -8,35 +8,35 @@ def load(symbol,case,phase='holdout'):
     return json.loads((ROOT/'results'/f'{symbol}_{phase}_{case}'/'summary.json').read_text())
 
 def main():
-    lines=['# Resultados propios — v0.2\n',
-    '**Resultado: no hay evidencia suficiente para operar dinero real con estas estrategias.**\n',
-    'Son simulaciones sobre datos históricos, no operaciones reales ni previsiones. Universo fijado: BTCUSDT y ETHUSDT. Periodo: enero–marzo de 2025, 25.920 velas 5m por símbolo (51.840 total), descargadas del archivo oficial Binance y verificadas con sus checksums. El trimestre elegido sirve como estudio piloto reproducible, no representa todos los regímenes ni el mercado actual.\n',
-    'Protocolo fijado antes de ver resultados: elegir el mayor PnL de enero entre SMA 5/20, 12/48 con separación 26 bps y 20/60 con separación 26 bps. Validar en febrero y evaluar en marzo sin reselección. Ambos símbolos seleccionaron SMA 20/60. Las ventanas significan barras de cinco minutos (100 y 300 minutos); no es scalping de segundos. El parámetro de separación no es una previsión de beneficio.\n',
-    'Cada evaluación empieza con 1.000 USDT virtuales, una sola posición de hasta 100 USDT, sin apalancamiento ni reinversión proporcional. Máximo 12 entradas por día UTC, pausa de 3 barras tras salida, bloqueo al caer 5% desde máximo y pausa diaria tras caer 2%. Señal calculada antes de apertura, ejecución en apertura siguiente con impacto; cierres por riesgo se realizan en la siguiente observación, no en un stop intrabar.\n',
-    'Costes base hipotéticos: 10 bps de comisión por lado, spread completo 2 bps y slippage 2 bps por lado. No corresponden a una tarifa confirmada de tu cuenta. Paso de cantidad 0,000001 y nominal mínimo 5 USDT son parámetros de laboratorio, no todos los filtros históricos de Binance. Electricidad/impuestos: excluidos.\n',
-    '## Validación de febrero\n',
-    '| Par | PnL neto USDT | Operaciones cerradas | Caída máxima de la cuenta |',
+    lines=['# Our results — v0.2\n',
+    '**Result: insufficient evidence to trade real money with these strategies.**\n',
+    'These are historical simulations, not real trades or forecasts. Fixed universe: BTCUSDT and ETHUSDT. Period: January–March 2025, 25,920 five-minute candles per symbol (51,840 total), downloaded from the official Binance archive and verified against its checksums. The chosen quarter is a reproducible pilot study, not a representation of every regime or the current market.\n',
+    'Protocol fixed before viewing results: select the highest January PnL among SMA 5/20, 12/48 with 26 bps separation, and 20/60 with 26 bps separation. Validate in February and evaluate in March without reselection. Both symbols selected SMA 20/60. Windows refer to five-minute bars (100 and 300 minutes); this is not second-scale scalping. The separation parameter is not a profit forecast.\n',
+    'Each evaluation starts with 1,000 virtual USDT and a single position of up to 100 USDT, without leverage or proportional reinvestment. Maximum 12 entries per UTC day, a three-bar cooldown after exit, a halt after 5% peak drawdown, and a daily pause after a 2% loss. Signals precede the opening; fills occur at the next opening with impact. Risk exits occur on the next observation, not through an intrabar stop.\n',
+    'Hypothetical base costs: 10 bps fees per side, 2 bps full spread, and 2 bps slippage per side. These are not confirmed account fees. A 0.000001 quantity step and 5 USDT minimum notional are laboratory parameters, not all historical Binance filters. Electricity and taxes are excluded.\n',
+    '## February validation\n',
+    '| Pair | Net PnL USDT | Closed trades | Maximum account drawdown |',
     '|---|---:|---:|---:|']
     for symbol in ('BTCUSDT','ETHUSDT'):
         r=load(symbol,'selected','validation')
         lines.append(f"| {symbol} | {r['net_pnl']:.6f} | {r['closed_trades']} | {r['max_drawdown_pct']:.3f}% |")
-    lines+=['\n## Evaluación final: marzo, 744 horas\n',
-    '| Par | Estrategia/coste | PnL neto USDT | Comisiones USDT | Operaciones | Caída máxima cuenta |',
+    lines+=['\n## Final evaluation: March, 744 hours\n',
+    '| Pair | Strategy/cost | Net PnL USDT | Fees USDT | Trades | Maximum account drawdown |',
     '|---|---|---:|---:|---:|---:|']
     for symbol in ('BTCUSDT','ETHUSDT'):
         for case in ('baseline_5_20','selected','buy_hold_100','cash','selected_cost_zero','selected_fee_7_5','selected_stress'):
             r=load(symbol,case)
             lines.append(f"| {symbol} | {case} | {r['net_pnl']:.6f} | {r['fees']:.4f} | {r['closed_trades']} | {r['max_drawdown_pct']:.3f}% |")
-    lines+=['\nLa baseline 5/20 usa hasta 288 entradas/día y sin cooldown, con los mismos límites de pérdida. Es una adaptación a velas de la idea de v0.1, no su reproducción a intervalos de cinco segundos. `buy_hold_100` compra hasta 100 USDT y conserva el resto en efectivo; no aplica stops ni rebalanceo. `selected_cost_zero` elimina comisión e impacto; `selected_fee_7_5` reduce solo la comisión a 7,5 bps; `selected_stress` usa comisión 15, slippage 5 y spread 10 bps. No reoptimiza los parámetros.\n',
-    '## Ganancias y pérdidas por hora/segundo\n',
-    '| Par, estrategia seleccionada | Media USDT/h | Media aritmética USDT/s | Peor hora USDT | Mejor hora USDT | Aciertos | Profit factor |',
+    lines+=['\nThe 5/20 baseline permits up to 288 entries/day without cooldown, with the same loss limits. It adapts the v0.1 idea to candles rather than reproducing five-second intervals. `buy_hold_100` buys up to 100 USDT and holds the remainder in cash, without stops or rebalancing. `selected_cost_zero` removes fees and impact; `selected_fee_7_5` reduces fees only to 7.5 bps; `selected_stress` uses 15 bps fees, 5 bps slippage, and 10 bps spread. Parameters are not reoptimized.\n',
+    '## Gains and losses per hour/second\n',
+    '| Pair, selected strategy | Average USDT/h | Arithmetic average USDT/s | Worst hour USDT | Best hour USDT | Win rate | Profit factor |',
     '|---|---:|---:|---:|---:|---:|---:|']
     for symbol in ('BTCUSDT','ETHUSDT'):
         r=load(symbol,'selected')
         lines.append(f"| {symbol} | {r['average_pnl_per_hour']:.9f} | {r['average_pnl_per_second']:.12f} | {r['worst_hour_pnl']:.4f} | {r['best_hour_pnl']:.4f} | {r['win_rate_pct']:.2f}% | {r['profit_factor']:.4f} |")
-    lines+=['\nLas horas se agrupan en UTC y contienen cambios de patrimonio, incluyendo posiciones abiertas. Las ganancias de las operaciones cerradas se registran por separado. Al final se liquida todo el inventario pagando salida; así el PnL total concilia con operaciones realizadas. La media por segundo NO es una medición de ejecución ni extremos intrasegundo. Los promedios incluyen todas las 744 horas, también sin exposición.\n',
-    'ETH terminó con solo unas milésimas de USDT de beneficio: es económicamente indistinguible de cero para este uso, y los costes adicionales lo vuelven negativo. BTC pasó de beneficio sin costes a pérdida neta. El estrés pierde en ambos. No interpretamos ganar menos pérdidas que la baseline como haber encontrado ventaja positiva.\n',
-    '## Dos cuentas simultáneas\n']
+    lines+=['\nHours are grouped in UTC and include equity changes from open positions. Closed-trade profits are recorded separately. All inventory is liquidated at the end with exit costs, reconciling total PnL with realized trades. The per-second average does NOT measure execution or intrasecond extremes. Averages include all 744 hours, including periods without exposure.\n',
+    'ETH ended with only a few thousandths of a USDT in profit: economically indistinguishable from zero for this use, and additional costs make it negative. BTC moved from profit without costs to net loss. Stress loses on both symbols. Losing less than the baseline is not interpreted as a positive edge.\n',
+    '## Two simultaneous accounts\n']
     curves=[]
     for symbol in ('BTCUSDT','ETHUSDT'):
         with (ROOT/'results'/f'{symbol}_holdout_selected'/'equity.csv').open() as f:
@@ -48,12 +48,12 @@ def main():
         out.append({'timestamp':a['timestamp'],'equity_combined':eq})
     with (ROOT/'results'/'combined_equity.csv').open('w',newline='') as f:
         w=csv.DictWriter(f,fieldnames=out[0].keys());w.writeheader();w.writerows(out)
-    lines.append(f"Capital total virtual: 2.000 USDT. PnL conjunto: {out[-1]['equity_combined']-2000:.6f} USDT. Caída máxima conjunta marcada a cierre: {dd:.3f}%. Es agregación de dos cuentas independientes, NO un límite de riesgo global implementado.\n")
+    lines.append(f"Total virtual capital: 2,000 USDT. Combined PnL: {out[-1]['equity_combined']-2000:.6f} USDT. Maximum combined close-marked drawdown: {dd:.3f}%. This aggregates two independent accounts; it is NOT an implemented global risk limit.\n")
     runtime=json.loads((ROOT/'results'/'runtime.json').read_text())
-    lines+=['## Requerimientos medidos\n',f"El benchmark completo consumió {runtime['wall_seconds']:.2f} segundos en el entorno de desarrollo y un máximo de {runtime['python_peak_allocated_mib']:.2f} MiB de asignaciones Python medido con tracemalloc. Esa cifra NO es RAM total del proceso ni medición del i7 del usuario; la instrumentación añade coste. No permite inferir latencia de trading. No utiliza GPU ni paquetes externos.\n",
-    '## Límites y reproducibilidad\n',
-    'Los CSV y hashes están incluidos. `python3 benchmark.py` reproduce las tablas; `python3 make_report.py` actualiza este informe. No se usó un modelo de IA ni se buscó ajustar parámetros al resultado de marzo. Solo se reservaron periodos históricos, no datos futuros realmente inéditos. Repetir ajustes mirando marzo lo convertiría en entrenamiento.\n',
-    'Faltan profundidad, colas maker, latencia variable, ejecuciones parciales, spread histórico, filtros históricos exactos, delistings, comisiones específicas, otros trimestres y validación demo. El drawdown observado en aperturas/cierres puede subestimar el intrabar; no existe un stop garantizado. Un solo trimestre y dos símbolos no permiten estimar probabilidad de rentabilidad futura.\n',
-    'Los resultados completos están en `results/comparison.csv`, `selection.json` y los directorios con `summary.json`, `trades.csv`, `hourly.csv` y `equity.csv`. El estudio de otros bots y bibliografía están en `research/ANALISIS.md`.\n']
-    (ROOT/'research'/'RESULTADOS.md').write_text('\n'.join(lines)+'\n')
+    lines+=['## Measured requirements\n',f"The full benchmark took {runtime['wall_seconds']:.2f} seconds in the development environment, with peak Python allocations of {runtime['python_peak_allocated_mib']:.2f} MiB measured using tracemalloc. This is NOT total process RAM or a measurement of the user's i7; instrumentation adds overhead. It cannot establish trading latency. No GPU or external packages are used.\n",
+    '## Limitations and reproducibility\n',
+    'CSVs and hashes are included. `python3 benchmark.py` reproduces the tables; `python3 make_report.py` updates this report. No AI model was used and parameters were not adjusted to March results. Only historical periods were reserved, not genuinely unseen future data. Repeated tuning against March would turn it into training data.\n',
+    'Missing elements include depth, maker queues, variable latency, partial fills, historical spread, exact historical filters, delistings, account-specific fees, other quarters, and demo validation. Drawdown observed at openings/closings may underestimate intrabar drawdown; there is no guaranteed stop. One quarter and two symbols cannot establish the probability of future profitability.\n',
+    'Full results are in `results/comparison.csv`, `selection.json`, and directories containing `summary.json`, `trades.csv`, `hourly.csv`, and `equity.csv`. Other-bot research and references are in `research/ANALYSIS.md`.\n']
+    (ROOT/'research'/'RESULTS.md').write_text('\n'.join(lines).rstrip()+'\n')
 if __name__=='__main__':main()
