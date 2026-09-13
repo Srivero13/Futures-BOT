@@ -1,0 +1,5 @@
+{
+  "wall_seconds": 86.14985335699998,
+  "python_peak_allocated_mib": 25.603931427001953,
+  "note": "Development host, not user i7. tracemalloc enabled; not a trading latency benchmark."
+}
