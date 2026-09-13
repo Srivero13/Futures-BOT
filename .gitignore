@@ -1,0 +1,17 @@
+data/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+PAUSE
+*.sqlite3
+*.sqlite3-*
+*.log
+
+# Restored by restore_data.py
+datasets/*.csv
+results/**/*.csv
+results/*.csv

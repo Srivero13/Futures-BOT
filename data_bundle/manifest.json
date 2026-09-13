@@ -1,0 +1,229 @@
+{
+  "archive_sha256": "794b54d1b9e9a260d3430bab3f0efb72dad770c8f3b6552cc29741e095b35325",
+  "parts": [
+    {
+      "name": "part-000.b64",
+      "sha256": "69095529afdd5edd795bea217170ff6bae04cbead68b54e1cf0ca570d0d74816"
+    },
+    {
+      "name": "part-001.b64",
+      "sha256": "a4d998beb9e954d32048939006b1383068a265a6b000dc8e3f6b1fb3583de090"
+    },
+    {
+      "name": "part-002.b64",
+      "sha256": "5e44944920888c6e8e37781b9298e8b00572114bfb9d53824a66e4d6a8d253d0"
+    },
+    {
+      "name": "part-003.b64",
+      "sha256": "2cabb22e52c1496decd2cc3e90147b635ee52983e976a997cc363b6f3c4842c9"
+    },
+    {
+      "name": "part-004.b64",
+      "sha256": "8b8cb9460dac34b23b86c361250ef1199eb6005a2174469a388c68d67ab6252f"
+    },
+    {
+      "name": "part-005.b64",
+      "sha256": "48528ecc05a43985879608a82c0ee662e66ccb3620610ae5a06683c237af874d"
+    },
+    {
+      "name": "part-006.b64",
+      "sha256": "81953332bf8ed218eaba61bc3880db987ccf43a5bb908706e1851c8c78bf4dd4"
+    },
+    {
+      "name": "part-007.b64",
+      "sha256": "1a7e71a66d8d85d07e2cb915704e20475d0df1f0844e8daee3a8e8754eef0ed8"
+    },
+    {
+      "name": "part-008.b64",
+      "sha256": "530029e6c3f76d11b06b325cea54ee473049c72f716ee88e5da191d9052d0558"
+    },
+    {
+      "name": "part-009.b64",
+      "sha256": "93de88c175c29eb2710d2e65db0a1cc6a4c135d43516a65eb50689cfb6810386"
+    },
+    {
+      "name": "part-010.b64",
+      "sha256": "28f68fdc91b3f7f1280687313f2d93d78619c67e253ff1ad5d64aa2dcbb70b28"
+    },
+    {
+      "name": "part-011.b64",
+      "sha256": "92deebc5352b218314e0666a3c063191347d2e5f50ec753a227d9f03e920eaa0"
+    },
+    {
+      "name": "part-012.b64",
+      "sha256": "31328f75e713bca998413a30e6c8e7a41bcc3148fd6f51bf301cfa1a98ac05fb"
+    },
+    {
+      "name": "part-013.b64",
+      "sha256": "1f1581210d9bac113fe29b2ec53144aeb79b1a147afbd316654b878a98073584"
+    },
+    {
+      "name": "part-014.b64",
+      "sha256": "b53271cf7682539dd50629de0a39ad3d7d5a0a92d612f54f6397ed2dd1b2690b"
+    },
+    {
+      "name": "part-015.b64",
+      "sha256": "0ae92f2d05bae5a90b061277b8301f8d9386814a154e54befd1ab57c12f117c3"
+    },
+    {
+      "name": "part-016.b64",
+      "sha256": "6a53d3d3ca309eb1c310aa70a31807096fb16801325fac1445b064938d3c2dad"
+    },
+    {
+      "name": "part-017.b64",
+      "sha256": "3722cb2f2e681cd4f53a2b309becd4d670f84232affe8942616965ca303e0570"
+    },
+    {
+      "name": "part-018.b64",
+      "sha256": "01af3122ceffd895e33e96d7624caf1b45a9d50d0dfa1f231bae455915fab476"
+    },
+    {
+      "name": "part-019.b64",
+      "sha256": "5535d805411c985167ef9d5dc5ae37f43bce25a94c36d45fa711af5d24e8df14"
+    },
+    {
+      "name": "part-020.b64",
+      "sha256": "70a1c6b63b1cd5f623053a288fc616d14791cd3368b95fe9a252f75cd0693325"
+    },
+    {
+      "name": "part-021.b64",
+      "sha256": "c7a6f7430a621e6dee0660198b48efbe4942217ad677ee208528e115e157cb7a"
+    },
+    {
+      "name": "part-022.b64",
+      "sha256": "2f88d5a60a8abc6bf44f7a9d4627907967e670802bf9b8760576d16ca5dbbd12"
+    },
+    {
+      "name": "part-023.b64",
+      "sha256": "5c7300abe17cf537d50673c3a77293be878ebd568a0e0c47fa3df9238e142c0d"
+    },
+    {
+      "name": "part-024.b64",
+      "sha256": "07b63a7c75c50a5d546d9352064ab5b37a96a4da854c96c02f64e599817f4b62"
+    },
+    {
+      "name": "part-025.b64",
+      "sha256": "1648564082eea79af5b1d8c38eb5cee19e8195a54e2b7f061f208d7cc6c35031"
+    },
+    {
+      "name": "part-026.b64",
+      "sha256": "bc2cba716a6c4a2a84a9c295d5ec0096616e72139f772e4ad760fb0460c16d30"
+    },
+    {
+      "name": "part-027.b64",
+      "sha256": "107719771fbe34bebaffdef6ac14a5ee401be5600997ecc47e852be02c45be0b"
+    },
+    {
+      "name": "part-028.b64",
+      "sha256": "e608a824a375d0e92915a392e78b44d5aa7ba844008b7c91414839b8f9e329eb"
+    },
+    {
+      "name": "part-029.b64",
+      "sha256": "bf0775f2d3d2884f0bbef3a8aab5061ddbdcdc669db5d52d36aa752cd50aa721"
+    },
+    {
+      "name": "part-030.b64",
+      "sha256": "bd59d1db1f1b62abbc38981f6cf1711afcfa800e880f4d203112a6e6003ff1e0"
+    },
+    {
+      "name": "part-031.b64",
+      "sha256": "24a81c319aa542834b13b38de59e08726b2168d3b5c5d9e5b8f50c54927e6731"
+    },
+    {
+      "name": "part-032.b64",
+      "sha256": "d45ba2c2d58745bba05453e4ab47fcd494a94bedb6c95a6dbc5b0449589d8539"
+    },
+    {
+      "name": "part-033.b64",
+      "sha256": "ddfac8d9952982f3f3b6fc80b7f2e7cca48f3ae9180619f8ba829bdb66cef66b"
+    },
+    {
+      "name": "part-034.b64",
+      "sha256": "5a7aa23572d720d78a456e8dda7740936a159e4ac92fdf31454cf7d4a0c0bbdf"
+    },
+    {
+      "name": "part-035.b64",
+      "sha256": "664448edf8b43a3195e0e7a9d8a0e08e50d394384c47f13025e0a4576524b204"
+    },
+    {
+      "name": "part-036.b64",
+      "sha256": "eb4bf52085fb2881ba9c8e59fec92a9cadf7a07267dc102988610b80a1956597"
+    },
+    {
+      "name": "part-037.b64",
+      "sha256": "3db9e628582f581148ee420b49d28f66fb81320146be1c3ddeda3e9b929b41dd"
+    }
+  ],
+  "files": {
+    "datasets/BTCUSDT-5m-2025Q1.csv": "9e4ee4abf3c4f58927c1af79f58c8047a93ad34b0151201ff48083aadd6d3305",
+    "datasets/ETHUSDT-5m-2025Q1.csv": "f1e543430e300ae274469e4e5eae44fc50d5fd8762f26b19914a77703cbe0abe",
+    "results/BTCUSDT_holdout_baseline_5_20/equity.csv": "87d1484a59a5884ee1447f9a5b4ad17ef61ae5e05dd008e29bbcc7a5ee2cb946",
+    "results/BTCUSDT_holdout_baseline_5_20/hourly.csv": "d6377fdb6fa534d09e7013e0c4c902a51c8dc74c29b50e5abe9f7f79d7de0aad",
+    "results/BTCUSDT_holdout_baseline_5_20/trades.csv": "442f0eb901d5d89659a615c96adada9ba4ac2415812f22449d7ae43741169044",
+    "results/BTCUSDT_holdout_buy_hold_100/equity.csv": "b753853a123d3879b5d01de08b80257c6e1ab3fb544e93728856958f749d1137",
+    "results/BTCUSDT_holdout_buy_hold_100/hourly.csv": "a844fcd75749be6b18756c8dc19c6ffbb03241e90b6e0f6e08d7e1f50be1706b",
+    "results/BTCUSDT_holdout_buy_hold_100/trades.csv": "2bd0092843ea6826f19d076070538868d78f795f41a85902aacd77546c362be8",
+    "results/BTCUSDT_holdout_cash/equity.csv": "b1b1416c0d431a6f192eef441b522c957d9b970083f80d883050884f860c9ef9",
+    "results/BTCUSDT_holdout_cash/hourly.csv": "f6cf8722e75143457d5861be20d0123419bf0ea7e90bca8c93f6d6fd11100f61",
+    "results/BTCUSDT_holdout_cash/trades.csv": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/BTCUSDT_holdout_selected/equity.csv": "18752cbe2d9b85d7156be7e86631e32fc3db6342b804305c4bf7adb7f70dc6eb",
+    "results/BTCUSDT_holdout_selected/hourly.csv": "2c85a28131e6b3fef3e925e97ee57aca4ed70017dcf307f00c225944a112410a",
+    "results/BTCUSDT_holdout_selected/trades.csv": "4371d093a5cd64cfc045a4fa4a665b09d09361ac79c9cd3e9db9f84066f14476",
+    "results/BTCUSDT_holdout_selected_cost_zero/equity.csv": "8cff928cbf9684e07f6db5d427fe19de283bb64c9368843001de362d74a31d99",
+    "results/BTCUSDT_holdout_selected_cost_zero/hourly.csv": "54f25161787d56939e3e66ab54fa206c0caf25e534f787a7b9c21eed1a6a5eb2",
+    "results/BTCUSDT_holdout_selected_cost_zero/trades.csv": "fcf1d602e0e8796825276418858f73d50321a93ab66dcf09ecbd49c3d8bab3cc",
+    "results/BTCUSDT_holdout_selected_fee_7_5/equity.csv": "88ceb07bdc0e4a5611e4a6f9be76a87aae499bdea57e231925ebb43714984455",
+    "results/BTCUSDT_holdout_selected_fee_7_5/hourly.csv": "0f37fd88e0aef9f9f0dfc4429f8f51449cdfccd21d0b7e99ce77c508d7312f54",
+    "results/BTCUSDT_holdout_selected_fee_7_5/trades.csv": "9f621182758f3ae591340c250b981e86e9cefe1cbe907ca24860c1a364147005",
+    "results/BTCUSDT_holdout_selected_stress/equity.csv": "7d92d5322004e2b07a5bfb1fc05a297ca0b92119e549fcd3222a50cc29dbfb73",
+    "results/BTCUSDT_holdout_selected_stress/hourly.csv": "eafb91fbdfb83c08bc905d2abf41d85af81b88128c2ab37a33bd013e43670705",
+    "results/BTCUSDT_holdout_selected_stress/trades.csv": "058eb9c86b1e74a82b97a72014e322e910c6396dbe98c7d5b37fd9aa6fb01f13",
+    "results/BTCUSDT_validation_baseline_5_20/equity.csv": "f05435724fe4bdab8f2007a9cc656c019af7992d707369dfb2e7bb4e795eb30e",
+    "results/BTCUSDT_validation_baseline_5_20/hourly.csv": "c990e8cea8e77abd77361fe67c8d3196b5f05433c92de54386405f9e42fe6174",
+    "results/BTCUSDT_validation_baseline_5_20/trades.csv": "a28514acb12b92168eb9b33415a8472e3a92289bdc525f21e9a0f04ead846ca8",
+    "results/BTCUSDT_validation_buy_hold_100/equity.csv": "64b7c59c32b77ffd8ed06cdfea336058858c92d6a69f4ddde68649b5a854486d",
+    "results/BTCUSDT_validation_buy_hold_100/hourly.csv": "7735928562e79dc4210e14a1e9db2b75b0e67ce989dab8eb1b80905b91b911c5",
+    "results/BTCUSDT_validation_buy_hold_100/trades.csv": "87f8cf7b3bb37838a4548c67f4345392d0a6b423063a7ed8e42d373857944c22",
+    "results/BTCUSDT_validation_cash/equity.csv": "36f261becda574547131e2309a1f550dbca36eeb747ebd533ab0be743f65ac7e",
+    "results/BTCUSDT_validation_cash/hourly.csv": "c3494a586b5d957c715570cb889603c29e386e7c7685f2021dcdfab71659f343",
+    "results/BTCUSDT_validation_cash/trades.csv": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/BTCUSDT_validation_selected/equity.csv": "893918960cf97c11e254c4ec636e2dd4b6ea3b7725395877af70a582dad33962",
+    "results/BTCUSDT_validation_selected/hourly.csv": "1e49d948a7de12765822fe69f89fc9ef657162256b71e611036f3df0e1713258",
+    "results/BTCUSDT_validation_selected/trades.csv": "6c8877e717f85d327d2ee6a998049af43c55b76e78d05b8c3c550e375d113bba",
+    "results/ETHUSDT_holdout_baseline_5_20/equity.csv": "9908f0419c24a328fa2ea65b92e0b2012c31f269b14e2649ebbac61befe318ab",
+    "results/ETHUSDT_holdout_baseline_5_20/hourly.csv": "9ab3832dbb5813543b74d44be7a8b5edee8211c5307f3f68b752b45c19de254e",
+    "results/ETHUSDT_holdout_baseline_5_20/trades.csv": "0a6e5bea6914fe0730dcaceec33787e89d69265a284bbd9b58e4110bd861cb0d",
+    "results/ETHUSDT_holdout_buy_hold_100/equity.csv": "6b073ba83c0e1d42be86ed42eabe0437ebccf518133a0d16c162dc46290b9fa4",
+    "results/ETHUSDT_holdout_buy_hold_100/hourly.csv": "c65c11332d6c225143f2d7cb4baec609b604727308fb3fdb204392c95fad85fd",
+    "results/ETHUSDT_holdout_buy_hold_100/trades.csv": "19b7129f82cd9f7e7126366ed175a090790ff9bc2c2b6cd0bbfc82763fc54c17",
+    "results/ETHUSDT_holdout_cash/equity.csv": "b1b1416c0d431a6f192eef441b522c957d9b970083f80d883050884f860c9ef9",
+    "results/ETHUSDT_holdout_cash/hourly.csv": "f6cf8722e75143457d5861be20d0123419bf0ea7e90bca8c93f6d6fd11100f61",
+    "results/ETHUSDT_holdout_cash/trades.csv": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/ETHUSDT_holdout_selected/equity.csv": "8d425aa97330e9171098b41e2c585de4569118fcc5161abbe97df888fb63268a",
+    "results/ETHUSDT_holdout_selected/hourly.csv": "5aa694a78b7514fdccea87608579030bdb066e2b30ca7f81b9c03aacb5bda9ea",
+    "results/ETHUSDT_holdout_selected/trades.csv": "2e793d376ca21501e249962ea344c0e59589393ff2756d4c5e99778efb4d3106",
+    "results/ETHUSDT_holdout_selected_cost_zero/equity.csv": "de656921c93cb8ef503c4b8ada0794ab13b7887343a0024083ed35374c28ce7d",
+    "results/ETHUSDT_holdout_selected_cost_zero/hourly.csv": "39a69021026cb8304b57ffb9e197c04241f367ed06939bc352659ec5e7c13676",
+    "results/ETHUSDT_holdout_selected_cost_zero/trades.csv": "a61a2b78c70ba24508faa18a0d6d2fa66165e88e110b5b868f77f856abde3070",
+    "results/ETHUSDT_holdout_selected_fee_7_5/equity.csv": "34425a31e282ee01cc936a3412ff4b33a92550e01c98d2908780a7d9a00531fb",
+    "results/ETHUSDT_holdout_selected_fee_7_5/hourly.csv": "6ccd5b1754ee466e1f0e9ca80dedd47a0c3e0170c0327e4d13b96f6b1dada42c",
+    "results/ETHUSDT_holdout_selected_fee_7_5/trades.csv": "5f01146236a144b77377c5c4a116dc7db5b20fd1ec8bb881f002dca3b1c68a24",
+    "results/ETHUSDT_holdout_selected_stress/equity.csv": "c793c9314b6fbeb399a75cea41abb18eee5b799fd189b4ae2f2307528a71ddf7",
+    "results/ETHUSDT_holdout_selected_stress/hourly.csv": "3861921deb26338d32afd962e7006e1ace5870b9243af678da7f5226a6329474",
+    "results/ETHUSDT_holdout_selected_stress/trades.csv": "f8e43016e251e407e5814ec544af0853756af763078735fe97442804264daf82",
+    "results/ETHUSDT_validation_baseline_5_20/equity.csv": "83d64588bb7f9159d808d26c33b1cf41a36c57f71a2c16b4b343339c7b8aca84",
+    "results/ETHUSDT_validation_baseline_5_20/hourly.csv": "672cecf06c8dddf8cd7ad7f302bdc5289d2efccbef7a8c6cb93e0f01cec37010",
+    "results/ETHUSDT_validation_baseline_5_20/trades.csv": "9e026b2b9edc3ecf5c76999ef47092064182906aa64a50b83ed06cafb2004234",
+    "results/ETHUSDT_validation_buy_hold_100/equity.csv": "ed017bd29b37c28c4453c01cfb9d0dfb641758909afc42dacff84598558272ec",
+    "results/ETHUSDT_validation_buy_hold_100/hourly.csv": "83a2ccee0eccfc35f516d4665925e503d4bf541c3fd8c2646fc40642cd227e28",
+    "results/ETHUSDT_validation_buy_hold_100/trades.csv": "f3ae50e990e444c97b86a0817a687a5f91f4f29afc0d18556aa6e92ed3184b56",
+    "results/ETHUSDT_validation_cash/equity.csv": "36f261becda574547131e2309a1f550dbca36eeb747ebd533ab0be743f65ac7e",
+    "results/ETHUSDT_validation_cash/hourly.csv": "c3494a586b5d957c715570cb889603c29e386e7c7685f2021dcdfab71659f343",
+    "results/ETHUSDT_validation_cash/trades.csv": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/ETHUSDT_validation_selected/equity.csv": "6e58a4dc5f209c1e9f9ddae78b36c06bfdea18a1f80cc37a73c58cad829f78e2",
+    "results/ETHUSDT_validation_selected/hourly.csv": "6643066ee499d4c1f3edb3455857db6d1f9c4e52708d31a6fd2f53751ed7d721",
+    "results/ETHUSDT_validation_selected/trades.csv": "e8233cd3887eb722367d2756f7dc097f33efa5800a7a153e96161276b9f48272",
+    "results/combined_equity.csv": "ce9a1c91228a406c29063e575c4b9857a9ac1d2d6503ced37ecb3afc7c160564",
+    "results/comparison.csv": "9c6e49c3e149c932e255aec481cf776e8da3516ef59517cfeffca05815afd490"
+  }
+}

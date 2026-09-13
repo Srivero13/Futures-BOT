@@ -1,0 +1,30 @@
+{
+  "bots": [
+    {
+      "mode": "paper",
+      "source": "synthetic",
+      "symbol": "BTCUSDT",
+      "initial_cash": 1000,
+      "order_notional": 100,
+      "fee_bps": 10,
+      "slippage_bps": 2,
+      "max_spread_bps": 20,
+      "max_loss_fraction": 0.02,
+      "poll_seconds": 1,
+      "id": "paper-a"
+    },
+    {
+      "mode": "paper",
+      "source": "synthetic",
+      "symbol": "ETHUSDT",
+      "initial_cash": 1000,
+      "order_notional": 150,
+      "fee_bps": 10,
+      "slippage_bps": 2,
+      "max_spread_bps": 20,
+      "max_loss_fraction": 0.02,
+      "poll_seconds": 1,
+      "id": "paper-b"
+    }
+  ]
+}
