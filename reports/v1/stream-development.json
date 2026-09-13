@@ -1,0 +1,14 @@
+{
+  "location": "current-runtime",
+  "observe_only": true,
+  "messages": 2230,
+  "reconnects": 1,
+  "errors": [
+    "WebSocketProxyException"
+  ],
+  "duration_seconds": 30.004007550000097,
+  "interarrival_p95_ms": 53.39338100020541,
+  "kline_lag_p95_ms": null,
+  "decision_compute_p99_ms": null,
+  "note": "Interarrival is not RTT. BookTicker has no event timestamp; local receipt-age checks cannot prove exchange freshness."
+}

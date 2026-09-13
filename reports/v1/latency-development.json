@@ -1,0 +1,335 @@
+{
+  "schema": 1,
+  "created_at_ms": 1789317680230,
+  "location": "codex-development-not-entel",
+  "measurement": "REST response RTT via urllib (DNS/TLS/proxy included), NOT order acknowledgments or fills",
+  "endpoints": {
+    "server_time": {
+      "successes": 5,
+      "attempts": 30,
+      "failures": 25,
+      "p50_ms": 1831.885771,
+      "p95_ms": 3295.166491,
+      "p99_ms": 3295.166491,
+      "eligible_for_paper_stream": false,
+      "quote_deadline_ms": 1000,
+      "minimum_decision_spacing_ms": 6591,
+      "minimum_horizon_ms": 65904,
+      "rule": "Engineering heuristic, not economically optimized. Requires >=30 successes, <=5% failures, p99<=1000ms.",
+      "samples": [
+        {
+          "rtt_ms": 2005.466904,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2003.246788,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.706654,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.846113,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.746679,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 1863.999975,
+          "ok": true
+        },
+        {
+          "rtt_ms": 2002.85984,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.748594,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.80193,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.735883,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2003.027161,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.849162,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.729663,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.757271,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 1642.581839,
+          "ok": true
+        },
+        {
+          "rtt_ms": 2002.918879,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.757824,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2003.165307,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.754191,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 1831.885771,
+          "ok": true
+        },
+        {
+          "rtt_ms": 2002.872862,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2003.135012,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.762451,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 3295.166491,
+          "ok": true
+        },
+        {
+          "rtt_ms": 2002.694951,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.753519,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.806697,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.745394,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 1666.635988,
+          "ok": true
+        },
+        {
+          "rtt_ms": 2002.732617,
+          "ok": false,
+          "error": "URLError"
+        }
+      ]
+    },
+    "quote": {
+      "successes": 3,
+      "attempts": 30,
+      "failures": 27,
+      "p50_ms": 3407.802613,
+      "p95_ms": 3506.669081,
+      "p99_ms": 3506.669081,
+      "eligible_for_paper_stream": false,
+      "quote_deadline_ms": 1000,
+      "minimum_decision_spacing_ms": 7014,
+      "minimum_horizon_ms": 70134,
+      "rule": "Engineering heuristic, not economically optimized. Requires >=30 successes, <=5% failures, p99<=1000ms.",
+      "samples": [
+        {
+          "rtt_ms": 2002.666335,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.789251,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.922076,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.731625,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2001.854244,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.750594,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.77666,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 3407.802613,
+          "ok": true
+        },
+        {
+          "rtt_ms": 2002.68086,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.756838,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.699429,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.776821,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.781113,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.826694,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.709127,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.699669,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.805396,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.740222,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.733687,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.798414,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 1395.66454,
+          "ok": true
+        },
+        {
+          "rtt_ms": 2002.737711,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.768604,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.642367,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.747507,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.763854,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.807558,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 2002.69262,
+          "ok": false,
+          "error": "URLError"
+        },
+        {
+          "rtt_ms": 3506.669081,
+          "ok": true
+        },
+        {
+          "rtt_ms": 2002.640378,
+          "ok": false,
+          "error": "URLError"
+        }
+      ]
+    }
+  },
+  "clock_estimate": {
+    "offset_ms": 603.62548828125,
+    "uncertainty_ms": 821.2909195
+  },
+  "note": "Re-run on the actual ENTEL PC. Public endpoints alone cannot certify order latency."
+}
