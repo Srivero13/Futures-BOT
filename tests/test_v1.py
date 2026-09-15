@@ -118,6 +118,7 @@ class TimingAndFeedTests(unittest.TestCase):
     def test_profile_must_be_local_current_with_clock_bound(self):
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/'p.json';p={'created_at_ms':1000,'location':'user-pc','endpoints':{'quote':policy([100]*100,0,100),'server_time':policy([100]*100,0,100)},'clock_estimate':{'uncertainty_ms':50,'offset_ms':0}}
+            for endpoint in p['endpoints'].values():endpoint['samples']=[{'ok':True,'rtt_ms':100} for _ in range(100)]
             path.write_text(json.dumps(p));self.assertEqual(load_profile(path,1001),p)
             for key,value in [('location','development'),('created_at_ms',2000),('created_at_ms',-86400000)]:
                 bad={**p,key:value};path.write_text(json.dumps(bad))
@@ -150,12 +151,12 @@ class ModelTests(unittest.TestCase):
     def test_features_are_causal_and_live_matches_batch(self):
         rows=self.rows();x=feature_matrix(rows)
         np.testing.assert_allclose(x[100],feature_matrix(rows[80:101])[-1])
-        changed=rows[:101]+[{**r,'close':'10000'} for r in rows[101:]]
+        changed=rows[:101]+[{**r,'close':'10000','high':'10001'} for r in rows[101:]]
         np.testing.assert_allclose(x[:101],feature_matrix(changed)[:101],equal_nan=True)
 
     def test_holdout_cannot_change_fit_or_calibration(self):
         rows=self.rows();m=fit_model(rows,feature_matrix(rows),'BTCUSDT',3,300,400)
-        changed=rows[:400]+[{**r,'open':'10000','close':'10000'} for r in rows[400:]]
+        changed=rows[:400]+[{**r,'open':'10000','close':'10000','high':'10001'} for r in rows[400:]]
         other=fit_model(changed,feature_matrix(changed),'BTCUSDT',3,300,400)
         self.assertEqual(m,other)
         self.assertTrue(all(math.isfinite(v) for v in m.coef))

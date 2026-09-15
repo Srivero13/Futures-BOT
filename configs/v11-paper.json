@@ -1,0 +1,12 @@
+{
+  "mode": "paper",
+  "database": "data/v11-paper.sqlite3",
+  "model_directory": "models",
+  "accounts": [
+    {"id": "binance-a", "symbol": "BTCUSDT", "capital": "1000", "notional": "100"},
+    {"id": "binance-b", "symbol": "ETHUSDT", "capital": "1000", "notional": "100"}
+  ],
+  "risk": {"fee_bps": "10", "slip_bps": "2", "global_cap": "200", "drawdown": "0.05", "daily_loss": "0.02", "max_spread_bps": "20"},
+  "cooldown_ms": 60000,
+  "max_entries_day": 12
+}

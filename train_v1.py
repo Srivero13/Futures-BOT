@@ -8,7 +8,7 @@ from pathlib import Path
 import tempfile
 import time
 import numpy as np
-from engine_v1.core import Quote,Portfolio,dec,break_even_bps
+from engine_v1.core import Quote,Portfolio,dec,break_even_bps,monetary
 from engine_v1.model import feature_matrix,fit_model
 ROOT=Path(__file__).resolve().parent
 
@@ -27,7 +27,8 @@ def load_rows(path):
     return rows
 
 
-def evaluate(rows,x,model,start,end,*,fees='10',slip='2',spread='2',latency_ms=250,strategy='model'):
+@monetary
+def evaluate(rows,x,model,start,end,*,fees='10',slip='2',spread='2',latency_ms=250,strategy='model',include_daily=False):
     if not 0<=latency_ms<60000:raise ValueError('Replay supports latency below one candle')
     symbol=model.symbol;acc=[{'id':symbol,'symbol':symbol,'capital':'1000','notional':'100'}]
     engine=Portfolio(':memory:',acc,fee_bps=fees,slip_bps=slip,global_cap='100')
@@ -68,6 +69,10 @@ def evaluate(rows,x,model,start,end,*,fees='10',slip='2',spread='2',latency_ms=2
         'signal_compute_p99_ms':float(np.quantile(timings,.99)),'latency_scenario_ms':latency_ms,
         'fee_bps':fees,'slippage_bps':slip,'spread_bps':spread,
         'warning':'Historical paper result; latency shock is an OHLC proxy, not observed execution.'}
+    if include_daily:
+        daily={}
+        for hour,value in hourly.items():daily[hour//24]=daily.get(hour//24,dec(0))+value
+        summary['daily_pnl']=[str(daily[k]) for k in sorted(daily)]
     return summary,trades
 
 

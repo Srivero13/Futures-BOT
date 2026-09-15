@@ -1,0 +1,17 @@
+{
+  "version": "1.1.0",
+  "locked_before_evaluation": true,
+  "symbols": ["BTCUSDT", "ETHUSDT"],
+  "test_months": ["2025-07", "2025-08", "2025-09"],
+  "preceding_days": {"fit": 28, "calibration": 14, "selection": 14},
+  "horizons_minutes": [1, 3, 5],
+  "models": ["ridge", "volatility_scaled_ridge"],
+  "alpha": 10,
+  "one_sided_calibration_quantile": 0.90,
+  "entry_margin_log_bps": 2,
+  "promotion": {"positive_validation_pnl": true, "minimum_closed_trades": 30, "beats_zero_forecast_calibration_rmse": true, "positive_validation_daily_bootstrap_lower_95": true},
+  "bootstrap": {"seed": 110, "resamples": 2000, "block_days": 3},
+  "costs_bps": {"base": {"fee_per_side": 10, "slippage_per_side": 2, "spread": 2}, "stress": {"fee_per_side": 15, "slippage_per_side": 5, "spread": 10}},
+  "latency_scenarios_ms": [50, 250, 1000],
+  "scope": "Historical spot paper only. Costs and latency impact are assumptions. No retuning after the new test months. Monthly cash reset; folds are not a continuous account."
+}

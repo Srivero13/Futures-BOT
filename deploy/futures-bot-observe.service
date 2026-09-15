@@ -1,0 +1,16 @@
+[Unit]
+Description=Futures-BOT public market observer (no trades)
+
+[Service]
+Type=simple
+WorkingDirectory=%h/projects/Futures-BOT
+ExecStart=%h/projects/Futures-BOT/.venv/bin/python -m engine_v1.stream --seconds 0 --output data/stream-service.json
+Environment=PYTHONUNBUFFERED=1
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=15
+KillSignal=SIGINT
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target

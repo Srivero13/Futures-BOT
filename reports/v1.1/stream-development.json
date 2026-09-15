@@ -1,0 +1,18 @@
+{
+  "version": "1.1.0",
+  "location": "current-runtime",
+  "observe_only": true,
+  "messages": 3413,
+  "reconnects": 2,
+  "errors": {
+    "WebSocketProxyException": 1,
+    "WebSocketTimeoutException": 1
+  },
+  "duration_seconds": 30.003665585999897,
+  "clock_ok": true,
+  "interarrival_p95_ms": 29.126542000085465,
+  "kline_lag_p95_ms": null,
+  "decision_compute_p99_ms": null,
+  "sample_window": 4096,
+  "note": "Bounded recent samples. Interarrival is not RTT. BookTicker lacks source event time. No real orders."
+}

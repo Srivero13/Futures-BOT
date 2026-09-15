@@ -13,6 +13,8 @@ def percentile(values, q):
 
 
 def policy(samples, failures, attempts):
+    if type(attempts) is not int or type(failures) is not int or attempts<0 or failures<0 or len(samples)+failures!=attempts or any(isinstance(x,bool) or not math.isfinite(x) or x<=0 for x in samples):
+        raise ValueError('Invalid latency measurements')
     p50=percentile(samples,.5);p95=percentile(samples,.95);p99=percentile(samples,.99)
     ready=len(samples)>=30 and failures/max(1,attempts)<=.05 and p99 is not None and p99<=1000
     return {'successes':len(samples),'attempts':attempts,'failures':failures,
