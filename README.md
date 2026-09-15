@@ -1,73 +1,98 @@
-# Futures-BOT 1.0 — research and paper trading
+# Futures-BOT 1.1 — research and paper trading
 
-A shared engine for historical simulation and two virtual BTC/USDT and ETH/USDT accounts, with Decimal accounting, a calibrated Ridge model, and latency controls. **It does not send real orders. Profitability has not been demonstrated.**
+A CPU-based Binance spot research engine with two virtual accounts, Decimal accounting, a calibrated model interface, and a supervised WebSocket coordinator. **No real orders are sent. No profitable strategy has been demonstrated.**
 
-This release improves the engineering foundation. The trained models failed promotion and remain blocked from opening positions. The repository name does not imply futures support: this version studies Binance spot without leverage. Capital.com, Hapi, forex, and stocks are not integrated into the 1.0 engine.
+Version 1.1 fixes stale-feed exit blocking, bounds telemetry, reduces idle database growth, adds operator controls and backups, and expands validation to rolling historical periods. It includes an optional volatility-scaled Ridge model. The historical models remain unapproved; installing this release does not enable trading.
 
-Read the [1.0 report](reports/v1/RELEASE.md), [reproducible results](reports/v1/evaluation.json), and [response measurements](reports/v1/latency-development.json).
+Read the [1.1 audit and research report](reports/v1.1/RELEASE.md), [operations guide](docs/OPERATIONS.md), [locked experiment protocol](reports/v1.1/PROTOCOL.json), [evaluation](reports/v1.1/evaluation.json), and [engineering benchmark](reports/v1.1/benchmark.json).
 
-## Installation
+## Measured changes
 
-Python 3.10+; tested with Python 3.12 on Linux. Linux is the initial choice for the service. Your i7-9700F and 16 GB are sufficient for this CPU model; no GPU is required. This is not a benchmark of your PC or ENTEL connection.
+| Measure | v1.0 | v1.1 |
+|---|---:|---:|
+| Median feature calculation, same 10,000 candles | 132.61 ms | 6.38 ms |
+| Database after 10,000 idle ticks | 3,252,224 bytes | 491,520 bytes |
+| Idle audit rows in that workload | 10,000 | 0 |
+| Recent timing samples retained | Unbounded | 4,096 per series |
+| Unique automated tests | 43 | 65 |
+
+Feature computation was approximately 20.8× faster. The idle ledger workload itself took 0.540 s versus 0.565 s, so not every path became faster. Figures describe the development environment, not the dedicated i7 PC or Binance execution. Numerical feature equivalence was checked within tolerance. Trade audit rows remain retained.
+
+## Install on the dedicated PC
+
+Use Ubuntu Desktop 24.04 LTS and Python 3.12. The i7-9700F, 16 GB RAM, RX 570, and SSD are sufficient for this workload; GPU acceleration is not required.
 
 ```bash
-git clone -b develop https://github.com/Srivero13/Futures-BOT.git
+sudo apt update
+sudo apt install -y git
+mkdir -p ~/projects
+cd ~/projects
+git clone --branch develop https://github.com/Srivero13/Futures-BOT.git
 cd Futures-BOT
-python3 -m venv .venv
+bash scripts/bootstrap.sh
 source .venv/bin/activate
-python -m pip install -r requirements.txt
-python -m unittest discover -s tests -v
 ```
 
-On Windows, activate `.venv\Scripts\Activate.ps1` from PowerShell. Windows was not validated in this release.
+The setup script installs packages and runs tests; it does not start a service. See the [operations guide](docs/OPERATIONS.md) for OS settings, updates, backups, and the optional observer service. Windows code paths exist but were not validated here.
 
-## Measure from your PC
-
-Observe public WebSocket data without keys or trading:
+## Observe and measure
 
 ```bash
 python -m engine_v1.stream --seconds 60 --output data/stream-local.json
 python -m engine_v1.latency --samples 100 --location user-pc --output data/latency-local.json
+python -m engine_v1.operations status --file data/observe-health.json
 ```
 
-The second command measures REST response time, including DNS/TLS, and estimates clock uncertainty. It does not measure order acknowledgments. Profiles expire after 24 hours. Do not reuse the development profile as an ENTEL measurement.
-
-Cadence uses local percentiles: minimum decision spacing `max(100, 2 × p95)` ms; maximum quote age `min(1000, max(250, 3 × p99))` ms. These are conservative engineering rules. The profile requires at least 30 valid responses per endpoint, at most 5% failures, and p99 ≤ 1000 ms; clock uncertainty must be ≤ 250 ms. The investigated horizons are 1, 3, and 5 minutes. Neither a profitable horizon nor optimal timing has been demonstrated.
-
-## Reproduce training and evaluation
-
-```bash
-python download_v1_data.py
-python train_v1.py
-```
-
-Downloads 262,080 official one-minute BTC/ETH candles from April–June 2025, verifies SHA-256, and generates models and results. The 1.0 CSVs are not bundled: access to Binance public archives is required. The manifest verifies the same data. April is split into fitting and calibration; May selects the horizon; June is excluded from selection. Do not retune the strategy using June as a new validation set.
-
-Results include PnL, fees, drawdown, worst/best hour, and hourly/per-second averages. These averages are not regular income or forecasts. Electricity and taxes are excluded.
+No API keys are required. The observer works without models or a portfolio database. Local profiles expire after 24 hours; eligibility is recomputed from raw timing samples. REST RTT and WebSocket interarrival are not order-execution latency. The PC must remain awake and its clock synchronized.
 
 ## Two virtual accounts
 
 ```bash
 python -m engine_v1.stream --paper --profile data/latency-local.json --seconds 3600
+python -m engine_v1.operations status
 ```
 
-This command requires a valid local profile. Entries additionally require approved models calibrated no more than seven days ago and a warmup of 21 consecutive closed candles. **The included models are historical and unapproved: they will not open positions.** `train_v1.py` reproduces the historical experiment; it is not a current retraining service. Do not manually change `approved` or dates to enable trading.
+Default configuration: `configs/v11-paper.json`, two 1,000 USDT virtual ledgers, 100 USDT per entry, and a shared entry exposure cap of 200. Fees, slippage, and risk limits are assumptions. Only one coordinator may own the database. A valid local profile, approved recent model, closed-candle warmup, fresh quotes, and a stable clock are required for entry.
 
-One coordinator manages two virtual 1,000 USDT ledgers, a maximum entry notional of 100, and combined exposure of 200, with transactional SQLite and account/portfolio controls. Defaults: 10 bps fees per side, 2 bps slippage, maximum spread 20 bps, 12 daily entries, 60-second cooldown, 2% daily loss, and 5% drawdown. These are not verified account fees. Drawdown persistently blocks entries; daily loss resets on the next UTC day. Limits do not guarantee maximum losses during price gaps or disconnections.
+**The included models are historical and unapproved, so they do not open positions.** The rolling experiment does not automatically replace them. There is no current retraining or promotion daemon.
 
-The `data/v1-paper.sqlite3` database preserves balances and events; changing configuration requires a separate database. Preserve a database with virtual positions before removing it. Ctrl+C stops the process without liquidating. Stale quotes block decisions; exits wait for a valid quote. The `PAUSE` file belongs to the previous laboratory and does not control this engine.
+Operator controls in the repository directory:
 
-## Main changes and limitations
+```bash
+touch PAUSE       # Block entries; risk and horizon exits continue on fresh quotes.
+rm PAUSE          # Remove the operator pause.
+touch FLATTEN     # Request virtual exits and block entries until removed.
+```
 
-- Decimal monetary arithmetic with 50-digit precision, quantity-step rounding, round-trip costs, and persistent accounting without converting money to float.
-- Statistical float64 forecasts kept separate from money: Ridge via SVD least squares, training-only normalization, later calibration, and out-of-distribution entry rejection.
-- Order-book and closed-candle WebSocket feeds; reconnection and rejection of duplicate sequences, incomplete candles, and data gaps.
-- One accounting engine for replay and paper, with shared limits and transactional idempotency.
-- Tests for causality, model integrity, restart, risk, precision, and timing.
+Ctrl+C stops without liquidation. `FLATTEN` cannot liquidate a position without a valid quote. A stale held symbol blocks all entries but permits exits on other fresh symbols. See the guide before running unattended.
 
-There is no real/testnet execution, exchange reconciliation, queue simulation, funding, liquidation modeling, short selling, or remote protective orders. Paper fills are assumptions; one-minute candles do not validate subsecond scalping. A 30-second WebSocket observation does not validate 24/7 service. Operational monitoring and an event-retention policy are still required before unattended permanent operation.
+## Upgrade and preserve data
 
-Previous documentation and commands are preserved in [v0.2](docs/V0.2.md). `bot.py`, `benchmark.py`, and `backtest.py` belong to that version; the new model is used through `engine_v1` and `train_v1.py`.
+Stop the old coordinator and update with `git pull --ff-only origin develop`. Install requirements and run tests again. The new database is `data/v11-paper.sqlite3`; the old `data/v1-paper.sqlite3` is preserved and is not migrated. New virtual balances start independently. Back up a running 1.1 ledger with:
+
+```bash
+python -m engine_v1.operations backup data/v11-paper.sqlite3 data/backups/first.sqlite3
+```
+
+The destination must be new. Financial configuration changes still require a separate database; refreshing a transient quote deadline does not reset balances. Trade history is retained, idle events are omitted, and old deduplication rows are pruned with timestamp replay protection.
+
+## Reproduce research
+
+```bash
+python download_v11_data.py
+python train_v11.py
+python benchmark_v11.py
+```
+
+The experiment uses 527,040 official one-minute BTC/ETH candles across April–September 2025. Twelve archive checksums are verified. For each July, August, and September evaluation, the preceding 56 days are split into 28 fitting, 14 calibration, and 14 selection days. Three horizons and two Ridge variants are compared; cash is an explicit deployment alternative. Daily block-bootstrap intervals and out-of-sample error/coverage are reported.
+
+Raw CSVs and detailed trade logs are generated locally. Concise results, hashes, and historical model artifacts are committed. The benchmark requires the original v1.0 commit in Git history. Historical results and normalized per-second averages are not income forecasts. No parameters are retuned after viewing these test months.
+
+## Remaining scope
+
+This is spot-only, long-only paper research. No futures, funding, margin, real/testnet execution, broker reconciliation, partial fills, queue simulation, or authenticated accounts are implemented. Capital.com and Hapi are not integrated into the new engine. One-minute candles cannot validate subsecond execution. BookTicker lacks an exchange event timestamp, and a receipt-age check cannot establish source freshness. Continuous operation on the dedicated PC and its ENTEL connection remains unverified.
+
+Archived release documentation: [v1.0](docs/V1.0.md) and [v0.2](docs/V0.2.md). Their scope statements apply to those releases. The `engine_v1` package name is retained for command compatibility; its current version is 1.1.0.
 
 ## Project language
 

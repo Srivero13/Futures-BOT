@@ -1,0 +1,42 @@
+{
+  "baseline_commit": "58590544fa26f55390baaa41d7aab953e611a094",
+  "python": "3.12.14",
+  "numpy": "2.3.5",
+  "location": "development runtime, not the i7/ENTEL PC",
+  "feature_rows": 10000,
+  "repeats": 3,
+  "features": {
+    "v1.0": {
+      "seconds": [
+        0.13631612900007894,
+        0.13260628900002303,
+        0.13105336299986448
+      ],
+      "median_seconds": 0.13260628900002303
+    },
+    "v1.1": {
+      "seconds": [
+        0.006384818000015002,
+        0.005540665000125955,
+        0.006991298999992068
+      ],
+      "median_seconds": 0.006384818000015002
+    }
+  },
+  "idle_ledger": {
+    "v1.0": {
+      "idle_ticks": 10000,
+      "elapsed_seconds": 0.540284930000098,
+      "events_rows": 10000,
+      "database_bytes_after_close": 3252224
+    },
+    "v1.1": {
+      "idle_ticks": 10000,
+      "elapsed_seconds": 0.5652611540001544,
+      "events_rows": 0,
+      "database_bytes_after_close": 491520
+    }
+  },
+  "feature_speedup": 20.769000619862844,
+  "note": "Same rows and host. Feature equivalence checked. No trading-latency or profitability claim. Ledger includes SQLite I/O and one account; trade audit records are retained."
+}
