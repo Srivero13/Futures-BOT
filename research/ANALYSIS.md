@@ -1,4 +1,4 @@
-# Audit and evidence — Rivero Bots v0.2
+# Audit and evidence — Futures-BOT v0.2
 
 Prepared for Santiago Rivero. Sources consulted on September 12, 2026. This document describes the v0.2 release.
 

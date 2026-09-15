@@ -1,0 +1,22 @@
+{
+  "version": "1.5",
+  "locked_before_evaluation": true,
+  "horizon_bars": 3,
+  "alpha": 10,
+  "train_end_exclusive": "2025-09-08",
+  "calibration_end_exclusive": "2025-09-15",
+  "test_end_exclusive": "2025-10-01",
+  "features": "unchanged six causal v1.1 features",
+  "source_policy": "Separate models per venue and symbol. Never join USD and USDT price levels or labels.",
+  "calibration": "90th percentile overprediction, deterministic uniform reservoir up to 100000 samples; approximate above that limit",
+  "selection": "Fixed ridge alpha and horizon; no tuning on holdout",
+  "approval": "Research artifacts remain unapproved",
+  "speed_target": "200x is aspirational, measured separately for warmed batch inference and cached quote decisions",
+  "requested_download_experiment": {
+    "train_end": "2025-10-15",
+    "calibration_end": "2025-10-22",
+    "test_end": "2025-11-01",
+    "status": "Not run: Binance and Coinbase public endpoints timed out from workspace"
+  },
+  "actual_data": "Existing checksum-verified Binance BTCUSDT and ETHUSDT April-September 2025. Previously analyzed in v1.1: retrospective validation, not new unseen market evidence."
+}

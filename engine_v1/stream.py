@@ -12,6 +12,7 @@ import websocket
 from .core import Portfolio,Quote,Rules,dec,break_even_bps
 from .latency import percentile,policy as timing_policy
 from .model import RidgeModel,feature_matrix
+from .fast import forecast,cost_gate
 from .operations import atomic_json,process_lock
 ROOT=Path(__file__).resolve().parent.parent
 
@@ -108,7 +109,7 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
     def health(running=True):
         now=int(time.time()*1000)
         ages={s:now-q.timestamp_ms for s,q in feed.quotes.items()}
-        atomic_json(health_path,{'version':'1.1.0','running':running,'observe_only':observe,'timestamp_ms':now,
+        atomic_json(health_path,{'version':'1.5.0','running':running,'observe_only':observe,'timestamp_ms':now,
             'messages':events,'reconnects':reconnects,'errors':dict(errors),'clock_ok':clock_ok,
             'quote_age_ms':ages,'warm_candles':{s:len(r) for s,r in feed.rows.items()},'entry_gates':gates,
             'accounts':engine.states() if engine else [],'valuation_note':'last_equity is a historical mark, not a current executable balance',
@@ -157,8 +158,8 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
                                 s=a['symbol'];m=models[s]
                                 gate=entry_gate(m,feed,s,now,profile,paused or flatten,clock_ok);gates[a['id']]=gate
                                 if gate=='ready':
-                                    if s not in features:features[s]=feature_matrix(list(feed.rows[s]))[-1]
-                                    decisions[a['id']]=m.decision(features[s],break_even_bps(feed.quotes[s],cfg['risk']['fee_bps'],cfg['risk']['slip_bps']))
+                                    if s not in features:features[s]=forecast(m,feature_matrix(list(feed.rows[s]))[-1])
+                                    decisions[a['id']]=cost_gate(features[s],break_even_bps(feed.quotes[s],cfg['risk']['fee_bps'],cfg['risk']['slip_bps']))
                             outputs=engine.process(feed.quotes,decisions,now,event_id=f'ws:{time.time_ns()}',rules=rules,
                                 cooldown_ms=cfg['cooldown_ms'],max_entries_day=cfg['max_entries_day'],allow_entries=not(paused or flatten) and clock_ok,force_exit=flatten)
                             costs.append((time.perf_counter_ns()-t0)/1e6);last_decision=mono
@@ -179,7 +180,7 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
         finally:
             health(False)
             if engine is not None:engine.close()
-    return {'version':'1.1.0','location':'current-runtime','observe_only':observe,'messages':events,'reconnects':reconnects,
+    return {'version':'1.5.0','location':'current-runtime','observe_only':observe,'messages':events,'reconnects':reconnects,
         'errors':dict(errors),'duration_seconds':time.monotonic()-start,'clock_ok':clock_ok,
         'interarrival_p95_ms':percentile(gaps,.95),'kline_lag_p95_ms':percentile(lags,.95),
         'decision_compute_p99_ms':percentile(costs,.99),'sample_window':4096,

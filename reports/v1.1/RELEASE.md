@@ -6,13 +6,13 @@ Version 1.1 improves operational correctness, research reproducibility, and sele
 
 The strongest measured improvement is batch feature construction. On identical 10,000-candle inputs, median runtime fell from 132.61 ms to 6.38 ms, approximately 20.8× faster. Numerical equivalence was checked against the exact v1.0 implementation within a relative tolerance of 1e-10 and absolute tolerance of 1e-12. This accelerates research preparation; it is not a 20.8× improvement in market prediction or order execution.
 
-The idle-ledger benchmark reduced post-close database size from 3,252,224 to 491,520 bytes, approximately 84.9%. It removed 10,000 HOLD audit records while preserving state and deduplication. Ledger runtime rose from 0.540 to 0.565 seconds in this workload, approximately 4.6% slower, reflecting additional controls and measurement variability. These are local development measurements, not measurements of the dedicated i7 or ENTEL connection.
+The idle-ledger benchmark reduced post-close database size from 3,252,224 to 491,520 bytes, approximately 84.9%. It removed 10,000 HOLD audit records while preserving state and deduplication. Ledger runtime rose from 0.540 to 0.565 seconds in this workload, approximately 4.6% slower, reflecting additional controls and measurement variability. These are local development measurements, not measurements of other deployment hosts or connections.
 
 ## Scope and evidence
 
 The reference implementation is Git commit `58590544fa26f55390baaa41d7aab953e611a094`. Audit evidence combines source inspection, regression and fault tests, the identical-input engineering benchmark, official exchange and database documentation, and a fixed rolling historical experiment. There is no real-money trade record, broker order latency, or demonstrated profitability in this evidence.
 
-The target installation remains the i7-9700F, 16 GB RAM, RX 570, and SSD running Linux. This release introduces no GPU framework. Hardware changes cannot establish predictive edge. No profitability comparison with commercial bots is inferred from marketing figures or a competition leaderboard. Earlier v0.2 literature remains archived; current release conclusions are based on the measurements and sources identified here.
+The installation workflow targets a Linux host with CPU-based numerical processing. This release introduces no GPU framework. Hardware changes cannot establish predictive edge. No profitability comparison with commercial bots is inferred from marketing figures or a competition leaderboard. Earlier v0.2 literature remains archived; current release conclusions are based on the measurements and sources identified here.
 
 ## Audit findings and remedies
 

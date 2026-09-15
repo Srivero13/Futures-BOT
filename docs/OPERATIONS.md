@@ -1,13 +1,13 @@
 # Installation and operations
 
-Version 1.1 remains a Binance spot research and paper system. No API keys, exchange orders, leverage, or funded accounts are used. The two configured accounts are virtual ledgers.
+Version 1.5 remains a Binance spot research and paper system. No API keys, exchange orders, leverage, or funded accounts are used. The two configured accounts are virtual ledgers.
 
-## Dedicated PC
+## Host setup
 
-The i7-9700F, 16 GB dual-channel RAM, RX 570, and 256 GB SSD are sufficient for the current CPU workload. Use Ubuntu Desktop 24.04 LTS, Intel/AMD 64-bit, with a wired connection to the ENTEL router. Connect the display to the graphics card. Preserve existing SSD data before selecting any erase/install option. Disable automatic suspend, install system updates, and enable network time synchronization:
+Use a Linux host meeting the [system requirements](REQUIREMENTS.md). The documented setup targets Ubuntu 24.04 LTS Desktop or Server; headless operation is supported by the terminal workflow. Use a stable connection, preserve existing disk data during OS installation, disable automatic suspend during sessions, and install system updates. UTC is a convenient display timezone for logs; candle timestamps and research boundaries are UTC regardless of the host display timezone. Enable time synchronization:
 
 ```bash
-sudo timedatectl set-timezone America/La_Paz
+sudo timedatectl set-timezone Etc/UTC
 sudo timedatectl set-ntp true
 timedatectl status
 ```
@@ -27,7 +27,7 @@ source .venv/bin/activate
 
 The script installs dependencies and runs tests. It does not start trading or a background service. All commands below assume this repository directory and activated virtual environment. Network-dependent commands may fail if Binance is unavailable from the connection. Do not substitute synthetic prices for failed live data.
 
-## Upgrade from 1.0
+## Upgrade from an earlier release
 
 Stop any running coordinator before updating code. Keep its database and models:
 
@@ -37,7 +37,7 @@ python -m pip install -r requirements.txt
 python -m unittest discover -s tests -v
 ```
 
-Version 1.1 uses `data/v11-paper.sqlite3`. The prior `data/v1-paper.sqlite3` is not migrated or overwritten; balances are not transferred. The new database starts with virtual capital from `configs/v11-paper.json`. An old schema passed to the new engine is rejected. Preserve an old ledger to avoid losing its open-position history.
+Version 1.5 retains the 1.1 database path `data/v11-paper.sqlite3` and its existing balances. The prior `data/v1-paper.sqlite3` is not migrated or overwritten; balances are not transferred. The new database starts with virtual capital from `configs/v11-paper.json`. An old schema passed to the new engine is rejected. Preserve an old ledger to avoid losing its open-position history.
 
 The financial fingerprint excludes the transient quote deadline, so a refreshed latency profile can change that deadline without changing balances. Changing account identities, capital, notional, model horizon, or financial risk settings still requires a separate database. Do not delete a ledger to bypass a persistent loss halt.
 
@@ -130,7 +130,11 @@ systemctl --user disable --now futures-bot-observe.service
 
 The observer maintains bounded telemetry and reconnects; it does not save a historical tick dataset. The unit is supplied as an example; systemd validation could not initialize a user manager in the development container, and host reboot behavior was not tested. No automatically trading service is enabled by this release.
 
-## Research commands
+## Current research workflow
+
+See the [v1.5 acquisition and training guide](V1.5.md) for chunked datasets, Coinbase/Binance adapters, and compiled inference. Research artifacts remain unapproved.
+
+## Archived v1.1 research commands
 
 ```bash
 python download_v11_data.py
@@ -138,4 +142,4 @@ python train_v11.py
 python benchmark_v11.py
 ```
 
-The downloader checks 12 official monthly archives and writes validated datasets atomically. The locked experiment is `reports/v1.1/PROTOCOL.json`. Detailed trade logs regenerate locally; concise results and model artifacts are versioned. `benchmark_v11.py` requires the original v1.0 commit in Git history. These are development measurements, not measured performance of the dedicated i7 or ENTEL network.
+The downloader checks 12 official monthly archives and writes validated datasets atomically. The locked experiment is `reports/v1.1/PROTOCOL.json`. Detailed trade logs regenerate locally; concise results and model artifacts are versioned. `benchmark_v11.py` requires the original v1.0 commit in Git history. These are development measurements; benchmark each deployment host and connection separately.

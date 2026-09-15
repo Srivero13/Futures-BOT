@@ -2,7 +2,7 @@
 
 ## Decision
 
-This release provides a research/paper engine with more precise accounting and shared controls. Entries are disabled for the included models because there is no evidence of a net edge. Optimal timing for the ENTEL PC cannot honestly be selected without measurements there and subminute execution validation using order-book data.
+This release provides a research/paper engine with more precise accounting and shared controls. Entries are disabled for the included models because there is no evidence of a net edge. Optimal timing for a deployment host cannot honestly be selected without measurements there and subminute execution validation using order-book data.
 
 ## Measured response
 
@@ -55,4 +55,4 @@ See `evaluation.json` for exact figures, per-case metrics, RMSE, and computation
 
 43 automated tests, including 21 previous and 22 new tests: exact accounting, break-even cost, quantization, restart/idempotency, global cap, second-account blocking after costs, stale/future quote rejection, rollback, persistent drawdown, per-account horizon, model integrity, causality, and holdout separation. The previous suite's demo authentication test uses mocks and does not demonstrate private-account connectivity.
 
-A short public WebSocket connection was verified. Continuous operation, the i7 PC, Windows, and ENTEL were not validated. Two virtual ledgers are not two authenticated exchange accounts. There is no real-order submission path. Financial execution development requires a validated strategy, subminute data, testnet testing, and robust reconciliation. The 1.0 label identifies this software release; it does not certify suitability for real capital.
+A short public WebSocket connection was verified. Continuous operation, deployment-specific hardware and networks, and Windows were not validated. Two virtual ledgers are not two authenticated exchange accounts. There is no real-order submission path. Financial execution development requires a validated strategy, subminute data, testnet testing, and robust reconciliation. The 1.0 label identifies this software release; it does not certify suitability for real capital.

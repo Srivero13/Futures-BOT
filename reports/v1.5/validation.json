@@ -1,0 +1,10 @@
+{
+  "command": "python3 -m unittest discover -s tests -q",
+  "tests": 82,
+  "passed": 82,
+  "failures": 0,
+  "new_tests": 17,
+  "real_orders_sent": false,
+  "fresh_multisource_download_completed": false,
+  "dataset_30gb_tested": false
+}
