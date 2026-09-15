@@ -1,0 +1,49 @@
+{
+  "version": "1.6",
+  "run_id": "514f5e9a87a83587ac73999c2394178a3b268b2ed448ce0e9598cae5a8dbe9f7",
+  "spec": {
+    "version": "1.6",
+    "algorithm_sha256": "b175580ac3bc411c144d13e1903db64027cb742880ea6c22a6457fae936f73bf",
+    "numpy": "2.3.5",
+    "python": "3.12.14",
+    "venue": "binance",
+    "symbol": "BTCUSDT",
+    "model_kind": "linear",
+    "horizon": 3,
+    "alpha": 10.0,
+    "chunk_size": 4096,
+    "train_end_ms": 1757289600000,
+    "calibration_end_ms": 1757894400000,
+    "test_end_ms": 1759276800000,
+    "sources": [
+      {
+        "file": "BTCUSDT-1m-2025Q2Q3.csv",
+        "sha256": "3dc068daf0e628fba29a554e900698121eba22adf5a17709b1743f31e2537bb9",
+        "bytes": 22797777,
+        "provenance": "Local import; venue supplied by operator"
+      }
+    ]
+  },
+  "fit_rows": 230376,
+  "calibration_rows": 3359,
+  "feature_count": 6,
+  "calibration": {
+    "calibration_reservoir_rows": 3359,
+    "quantile_is_approximate": false
+  },
+  "holdout": {
+    "examples": 23037,
+    "accepted": 23028,
+    "ood_rejected": 9,
+    "rmse_log_bps": 6.064534336321862,
+    "zero_rmse_log_bps_same_accepted_rows": 6.06415191966309,
+    "lower_bound_coverage": 0.8840541948931735,
+    "cost_gate_candidates": 0,
+    "cost_assumption_bps": 26,
+    "pnl": null,
+    "note": "Forecast diagnostics, not an execution backtest; overlapping holdout labels."
+  },
+  "approved": false,
+  "elapsed_this_attempt_seconds": 8.338540233999993,
+  "note": "Historical forecast diagnostics, not P&L. Resumption is from a completed fit, not a partial QR pass."
+}

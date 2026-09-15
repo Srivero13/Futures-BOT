@@ -25,29 +25,42 @@ class Reservoir:
         self.keys, self.values = keys, values
 
 
-def fit_stream(factory, symbol, horizon, train_end, calibration_end, alpha=10):
+def fit_stream(factory, symbol, horizon, train_end, calibration_end, alpha=10, model_kind="linear", progress=None):
     if horizon not in (1, 3, 5) or not math.isfinite(alpha) or alpha <= 0 or not 0 < train_end < calibration_end:
         raise ValueError('Invalid fit parameters')
-    n, mean, m2 = 0, np.zeros(7), np.zeros(7)
+    from .nonlinear import expand, PolynomialModel
+    if model_kind not in ('linear', 'polynomial'):
+        raise ValueError('Unknown model kind')
+    transform = expand if model_kind == 'polynomial' else lambda x: x
+    dimension = 27 if model_kind == 'polynomial' else 6
+    model_class = PolynomialModel if model_kind == 'polynomial' else RidgeModel
+    notify = progress or (lambda stage, count: None)
+    n, mean, m2 = 0, np.zeros(dimension + 1), np.zeros(dimension + 1)
     for b in segment(factory, 0, train_end):
-        values = b[:, 2:]
+        values = np.column_stack((transform(b[:, 2:8]), b[:, 8]))
+        if not np.isfinite(values).all():
+            raise ValueError("Non-finite transformed training data")
         count = len(values)
         local_mean = values.mean(axis=0)
         delta = local_mean - mean
         m2 += ((values - local_mean) ** 2).sum(axis=0) + delta ** 2 * n * count / (n + count)
         mean += delta * count / (n + count)
         n += count
+        notify("moments", n)
     if n < 100:
         raise ValueError('Insufficient training examples')
-    scale = np.sqrt(m2[:6] / n)
+    scale = np.sqrt(m2[:dimension] / n)
     scale = np.where(scale < 1e-12, 1., scale)
-    r = np.column_stack((np.sqrt(alpha) * np.eye(6), np.zeros(6)))
+    r = np.column_stack((np.sqrt(alpha) * np.eye(dimension), np.zeros(dimension)))
+    qr_count = 0
     for b in segment(factory, 0, train_end):
-        augmented = np.column_stack(((b[:, 2:8] - mean[:6]) / scale, b[:, 8] - mean[6]))
+        augmented = np.column_stack(((transform(b[:, 2:8]) - mean[:dimension]) / scale, b[:, 8] - mean[dimension]))
         r = np.linalg.qr(np.vstack((r, augmented)), mode='r')
-    coef = np.linalg.lstsq(r[:, :6], r[:, 6], rcond=None)[0]
-    model = RidgeModel(symbol, horizon, mean[:6].tolist(), scale.tolist(), coef.tolist(),
-                       float(mean[6]), 0., train_end, calibration_end, n, 0, 0., 0., alpha)
+        qr_count += len(b)
+        notify('qr', qr_count)
+    coef = np.linalg.lstsq(r[:, :dimension], r[:, dimension], rcond=None)[0]
+    model = model_class(symbol, horizon, mean[:dimension].tolist(), scale.tolist(), coef.tolist(),
+                       float(mean[dimension]), 0., train_end, calibration_end, n, 0, 0., 0., alpha)
     reservoir = Reservoir()
     squared_error = squared_zero = 0.
     count = 0
@@ -55,11 +68,12 @@ def fit_stream(factory, symbol, horizon, train_end, calibration_end, alpha=10):
     for b in segment(factory, train_end, calibration_end):
         # Non-overlapping labels on a fixed UTC grid; gaps cannot shift the phase.
         b = b[(b[:, 0] // 60000).astype(np.int64) % horizon == 0]
-        residual = (b[:, 2:8] - mean[:6]) / scale @ coef + mean[6] - b[:, 8]
+        residual = (transform(b[:, 2:8]) - mean[:dimension]) / scale @ coef + mean[dimension] - b[:, 8]
         reservoir.add(residual)
         squared_error += float(residual @ residual)
         squared_zero += float(b[:, 8] @ b[:, 8])
         count += len(b)
+        notify('calibration', count)
     if count < 30:
         raise ValueError('Insufficient calibration examples')
     values = np.sort(reservoir.values)
@@ -71,8 +85,9 @@ def fit_stream(factory, symbol, horizon, train_end, calibration_end, alpha=10):
     return model, {'calibration_reservoir_rows': len(values), 'quantile_is_approximate': count > len(values)}
 
 
-def evaluate_stream(factory, model, start, end, compiled=False):
-    predictor = FastPredictor(model, compiled=compiled)
+def evaluate_stream(factory, model, start, end, compiled=False, progress=None):
+    from .nonlinear import PolynomialModel
+    predictor = model if isinstance(model, PolynomialModel) else FastPredictor(model, compiled=compiled)
     n = accepted = covered = candidates = 0
     error = zero = 0.
     for b in segment(factory, start, end):
@@ -80,6 +95,7 @@ def evaluate_stream(factory, model, start, end, compiled=False):
         mask = np.isfinite(prediction)
         p, y = prediction[mask], b[mask, 8]
         n += len(b)
+        if progress: progress('evaluation', n)
         accepted += len(p)
         error += float(np.sum((p - y) ** 2))
         zero += float(y @ y)

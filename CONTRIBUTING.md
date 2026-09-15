@@ -11,6 +11,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m unittest discover -s tests -v
+python doctor.py
 ```
 
 Install `requirements-fast.txt` to exercise the optional compiled backend. Without it, the optional Numba test is skipped. The system installation script targets Ubuntu and requires sudo; the virtual-environment commands above do not install OS packages or start services.

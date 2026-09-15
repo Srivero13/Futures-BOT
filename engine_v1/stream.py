@@ -13,6 +13,7 @@ from .core import Portfolio,Quote,Rules,dec,break_even_bps
 from .latency import percentile,policy as timing_policy
 from .model import RidgeModel,feature_matrix
 from .fast import forecast,cost_gate
+from .nonlinear import load_model
 from .operations import atomic_json,process_lock
 ROOT=Path(__file__).resolve().parent.parent
 
@@ -86,6 +87,23 @@ def entry_gate(model,feed,symbol,now,profile,paused=False,clock_ok=True):
     return 'ready'
 
 
+
+def fetch_rules(symbols, remaining, heartbeat):
+    """Retry read-only exchange metadata within the startup time budget."""
+    for attempt in range(3):
+        try:
+            if remaining() <= 0: raise TimeoutError('Startup time budget expired')
+            with urlopen('https://api.binance.com/api/v3/exchangeInfo', timeout=min(5, remaining())) as response:
+                info = json.load(response)
+            rules = {item['symbol']: rules_from_exchange(item) for item in info['symbols'] if item['symbol'] in symbols}
+            if set(rules) != symbols: raise ValueError('Missing trading rules')
+            return rules
+        except OSError:
+            heartbeat()
+            if attempt == 2 or remaining() <= 0: raise
+            time.sleep(min(attempt + 1, remaining()))
+
+
 def stream(duration=60,profile_path=None,observe=True,config_path=None,health_path=None):
     if duration<0:raise ValueError('Duration must be nonnegative; zero runs until interrupted')
     cfg=json.loads(Path(config_path or ROOT/'configs/v11-paper.json').read_text())
@@ -95,7 +113,7 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
     accounts=cfg['accounts'];symbols={a['symbol'] for a in accounts}
     if not symbols or any(not s.isalnum() for s in symbols):raise ValueError('Invalid symbols')
     model_dir=ROOT/cfg['model_directory']
-    models={s:RidgeModel.load(model_dir/f'{s}-v1.json') for s in symbols} if not observe else {}
+    models={s:load_model(model_dir/f'{s}-v1.json') for s in symbols} if not observe else {}
     for a in accounts:
         if not observe:
             if models[a['symbol']].symbol!=a['symbol']:raise ValueError('Model symbol mismatch')
@@ -109,7 +127,7 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
     def health(running=True):
         now=int(time.time()*1000)
         ages={s:now-q.timestamp_ms for s,q in feed.quotes.items()}
-        atomic_json(health_path,{'version':'1.5.0','running':running,'observe_only':observe,'timestamp_ms':now,
+        atomic_json(health_path,{'version':'1.6.0','running':running,'observe_only':observe,'timestamp_ms':now,
             'messages':events,'reconnects':reconnects,'errors':dict(errors),'clock_ok':clock_ok,
             'quote_age_ms':ages,'warm_candles':{s:len(r) for s,r in feed.rows.items()},'entry_gates':gates,
             'accounts':engine.states() if engine else [],'valuation_note':'last_equity is a historical mark, not a current executable balance',
@@ -119,9 +137,7 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
         try:
             if not observe:
                 engine=Portfolio(db_path,accounts,max_age_ms=policy['quote_deadline_ms'],**cfg['risk'])
-                with urlopen('https://api.binance.com/api/v3/exchangeInfo',timeout=5) as r:info=json.load(r)
-                rules={s['symbol']:rules_from_exchange(s) for s in info['symbols'] if s['symbol'] in symbols}
-                if set(rules)!=symbols:raise ValueError('Missing trading rules')
+                rules=fetch_rules(symbols,remaining,health)
             names='/'.join(f'{s.lower()}@bookTicker/{s.lower()}@kline_1m' for s in sorted(symbols))
             url='wss://stream.binance.com:443/stream?streams='+names
             failures=0
@@ -175,12 +191,15 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
                     while time.monotonic()<deadline:
                         time.sleep(max(0,min(1,deadline-time.monotonic())));health()
                 finally:
-                    if sock is not None:sock.close()
+                    if sock is not None:
+                        try:sock.close()
+                        except (OSError,websocket.WebSocketException):errors['close_failure']+=1
         except KeyboardInterrupt:pass
         finally:
-            health(False)
-            if engine is not None:engine.close()
-    return {'version':'1.5.0','location':'current-runtime','observe_only':observe,'messages':events,'reconnects':reconnects,
+            try:health(False)
+            finally:
+                if engine is not None:engine.close()
+    return {'version':'1.6.0','location':'current-runtime','observe_only':observe,'messages':events,'reconnects':reconnects,
         'errors':dict(errors),'duration_seconds':time.monotonic()-start,'clock_ok':clock_ok,
         'interarrival_p95_ms':percentile(gaps,.95),'kline_lag_p95_ms':percentile(lags,.95),
         'decision_compute_p99_ms':percentile(costs,.99),'sample_window':4096,

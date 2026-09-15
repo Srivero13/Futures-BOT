@@ -1,6 +1,8 @@
 # Installation and operations
 
-Version 1.5 remains a Binance spot research and paper system. No API keys, exchange orders, leverage, or funded accounts are used. The two configured accounts are virtual ledgers.
+Version 1.6 remains a Binance spot research and paper system. No API keys, exchange orders, leverage, or funded accounts are used. The two configured accounts are virtual ledgers.
+
+For a new installation, follow [Start here](START_HERE.md), including the startup doctor and guarded launcher.
 
 ## Host setup
 
@@ -37,7 +39,7 @@ python -m pip install -r requirements.txt
 python -m unittest discover -s tests -v
 ```
 
-Version 1.5 retains the 1.1 database path `data/v11-paper.sqlite3` and its existing balances. The prior `data/v1-paper.sqlite3` is not migrated or overwritten; balances are not transferred. The new database starts with virtual capital from `configs/v11-paper.json`. An old schema passed to the new engine is rejected. Preserve an old ledger to avoid losing its open-position history.
+Version 1.6 retains the 1.1 database path `data/v11-paper.sqlite3` and its existing balances. The prior `data/v1-paper.sqlite3` is not migrated or overwritten; balances are not transferred. The new database starts with virtual capital from `configs/v11-paper.json`. An old schema passed to the new engine is rejected. Preserve an old ledger to avoid losing its open-position history.
 
 The financial fingerprint excludes the transient quote deadline, so a refreshed latency profile can change that deadline without changing balances. Changing account identities, capital, notional, model horizon, or financial risk settings still requires a separate database. Do not delete a ledger to bypass a persistent loss halt.
 
@@ -132,7 +134,7 @@ The observer maintains bounded telemetry and reconnects; it does not save a hist
 
 ## Current research workflow
 
-See the [v1.5 acquisition and training guide](V1.5.md) for chunked datasets, Coinbase/Binance adapters, and compiled inference. Research artifacts remain unapproved.
+See [Start here](START_HERE.md) for the current trainer and the [v1.5 acquisition guide](V1.5.md) for chunked datasets, Coinbase/Binance adapters, and compiled inference. Research artifacts remain unapproved.
 
 ## Archived v1.1 research commands
 

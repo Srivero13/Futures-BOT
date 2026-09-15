@@ -1,6 +1,6 @@
 # System requirements and compatibility
 
-Futures-BOT 1.5 is a CPU-based research and paper-trading application. It uses public market data and virtual balances. No exchange account, API key, GPU, paid data subscription, or funded account is required for the included workflows.
+Futures-BOT 1.6 is a CPU-based research and paper-trading application. It uses public market data and virtual balances. No exchange account, API key, GPU, paid data subscription, or funded account is required for the included workflows.
 
 ## Hardware planning
 
@@ -15,7 +15,7 @@ These are conservative setup budgets, not experimentally certified minimum speci
 | Network | Stable HTTPS and secure WebSocket access to selected public exchanges | Wired connection; measure latency on the actual runtime host |
 | Clock and power | Synchronized system clock; host awake during sessions | Disable suspend while running supervised sessions |
 
-Storage grows with the chosen instruments, dates, raw-data format, and audit history. The recommended 100 GB is a planning allowance, not a downloader requirement or a throughput guarantee. Increase it for larger collections. Training memory is controlled by `--chunk-size`; the default is 8,192 examples plus a small causal overlap. Multiple simultaneous training jobs each need their own memory budget.
+Storage grows with the chosen instruments, dates, raw-data format, and audit history. The recommended 100 GB is a planning allowance, not a downloader requirement or a throughput guarantee. Increase it for larger collections. Training memory is controlled by `--chunk-size`; the v1.6 default is 4,096 examples plus a small causal overlap. Multiple simultaneous training jobs each need their own memory budget.
 
 ## Software
 
@@ -23,9 +23,9 @@ Storage grows with the chosen instruments, dates, raw-data format, and audit his
 |---|---|
 | Operating system | Ubuntu 24.04 LTS, Desktop or Server, for the documented installation path |
 | Python | Python 3.12; release tests ran on 3.12.14 |
-| Base numerical library | NumPy `>=1.26,<3`; tests used 2.3.5 |
+| Base numerical library | NumPy 2.3.5, pinned for the tested environment |
 | WebSocket client | websocket-client 1.8.0 |
-| Optional compiled inference | Numba 0.63.1 and NumPy `>=1.26,<2.4`, installed through `requirements-fast.txt` |
+| Optional compiled inference | Numba 0.63.1 and NumPy 2.3.5, installed through `requirements-fast.txt` |
 | Tools | Git, pip, Python venv, trusted CA certificates |
 | Optional service management | systemd user services on Linux |
 
@@ -39,4 +39,4 @@ Local training imports accept chronological CSV or CSV.gz files with `timestamp,
 
 ## Next steps
 
-Follow the [README quick start](../README.md), then the [operations guide](OPERATIONS.md) for observation, local timing, backups, and optional services. Use the [v1.5 data and training guide](V1.5.md) for acquisition, model evaluation, and batch benchmarks. Research models are unapproved by default; passing installation checks does not establish a trading edge.
+Follow [Start here](START_HERE.md) or the [README quick start](../README.md), then the [operations guide](OPERATIONS.md) for observation, local timing, backups, and optional services. Use the [v1.5 data and training guide](V1.5.md) for acquisition, model evaluation, and batch benchmarks. Research models are unapproved by default; passing installation checks does not establish a trading edge.

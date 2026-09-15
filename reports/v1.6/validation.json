@@ -1,0 +1,24 @@
+{
+  "version": "1.6",
+  "tests_optional_environment": {
+    "run": 104,
+    "passed": 104,
+    "skipped": 0
+  },
+  "tests_clean_base_environment": {
+    "run": 104,
+    "passed": 103,
+    "skipped": 1,
+    "reason": "Optional Numba not installed in base environment"
+  },
+  "clean_install": "Fresh venv created; requirements.txt installed; doctor and tests run successfully",
+  "python": "3.12.14",
+  "numpy": "2.3.5",
+  "websocket_client": "1.8.0",
+  "numba_optional": "0.63.1",
+  "dataset_bytes": 44108369,
+  "raw_candles": 527040,
+  "dataset_30gb_tested": false,
+  "real_orders_sent": false,
+  "continuous_24h_tested": false
+}

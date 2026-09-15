@@ -1,0 +1,8 @@
+{
+  "common_accepted_examples": 22979,
+  "linear_rmse": 6.0083858945554365,
+  "polynomial_rmse": 6.009405107234016,
+  "zero_rmse": 6.007272688651727,
+  "approved": false,
+  "note": "Retrospective comparison on identical accepted rows; not P&L, significance, or a promotion criterion."
+}
