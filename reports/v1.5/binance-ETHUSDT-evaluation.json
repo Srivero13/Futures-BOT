@@ -1,0 +1,72 @@
+{
+  "version": "1.5",
+  "venue": "binance",
+  "symbol": "ETHUSDT",
+  "sources": [
+    {
+      "file": "ETHUSDT-1m-2025Q2Q3.csv",
+      "bytes": 21310592,
+      "sha256": "40e3c4812aea0cf5ab74a5e15fd6133effccd96bba99ce01cd33585667cd1705",
+      "provenance": {
+        "rows": 263520,
+        "sha256": "40e3c4812aea0cf5ab74a5e15fd6133effccd96bba99ce01cd33585667cd1705",
+        "venue": "binance",
+        "symbol": "ETHUSDT",
+        "timeframe_ms": 60000,
+        "archives": [
+          {
+            "url": "https://data.binance.vision/data/spot/monthly/klines/ETHUSDT/1m/ETHUSDT-1m-2025-04.zip",
+            "sha256": "32505b36565f7c446a3946dc6ea2f511e71d0f72c13cca2b09bb83307f198f8e"
+          },
+          {
+            "url": "https://data.binance.vision/data/spot/monthly/klines/ETHUSDT/1m/ETHUSDT-1m-2025-05.zip",
+            "sha256": "743268912388656e3c53d21e6e4b6c2b155c1b1f67c7bcbdae5e14cc3d9c633c"
+          },
+          {
+            "url": "https://data.binance.vision/data/spot/monthly/klines/ETHUSDT/1m/ETHUSDT-1m-2025-06.zip",
+            "sha256": "eb7641c42f642697524ce45f64c92bcc33a751b6ade791f91f70e3ec52880a70"
+          },
+          {
+            "url": "https://data.binance.vision/data/spot/monthly/klines/ETHUSDT/1m/ETHUSDT-1m-2025-07.zip",
+            "sha256": "b95c721b528260d865585f0723d287c836f2f22bb681ac45e0c56eaaf0047bd9"
+          },
+          {
+            "url": "https://data.binance.vision/data/spot/monthly/klines/ETHUSDT/1m/ETHUSDT-1m-2025-08.zip",
+            "sha256": "aaebc0e2baa7d7dcfcf6eb3eeb681b55a2e746dad86e758be0af7fca4391c480"
+          },
+          {
+            "url": "https://data.binance.vision/data/spot/monthly/klines/ETHUSDT/1m/ETHUSDT-1m-2025-09.zip",
+            "sha256": "2912831352b3e194ac38f7a66a373ea78f138dfd4fe5a3ac25acb80c5ccaa0ec"
+          }
+        ]
+      }
+    }
+  ],
+  "input_bytes": 21310592,
+  "chunk_size": 8192,
+  "inference_backend": "numpy",
+  "fit_rows": 230376,
+  "calibration_rows": 3359,
+  "calibration": {
+    "calibration_reservoir_rows": 3359,
+    "quantile_is_approximate": false
+  },
+  "holdout": {
+    "examples": 23037,
+    "accepted": 22987,
+    "ood_rejected": 50,
+    "rmse_log_bps": 11.546896826744126,
+    "zero_rmse_log_bps_same_accepted_rows": 11.54634553889482,
+    "lower_bound_coverage": 0.8851524774872754,
+    "cost_gate_candidates": 0,
+    "cost_assumption_bps": 26,
+    "pnl": null,
+    "note": "Forecast diagnostics, not an execution backtest; overlapping holdout labels."
+  },
+  "seconds": 5.387640128000044,
+  "peak_rss_kib_linux": 37120,
+  "approved": false,
+  "train_end_ms": 1757289600000,
+  "calibration_end_ms": 1757894400000,
+  "test_end_ms": 1759276800000
+}

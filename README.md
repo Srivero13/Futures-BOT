@@ -1,26 +1,39 @@
-# Futures-BOT 1.1 — research and paper trading
+# Futures-BOT 1.5 — research and paper trading
 
 A CPU-based Binance spot research engine with two virtual accounts, Decimal accounting, a calibrated model interface, and a supervised WebSocket coordinator. **No real orders are sent. No profitable strategy has been demonstrated.**
 
-Version 1.1 fixes stale-feed exit blocking, bounds telemetry, reduces idle database growth, adds operator controls and backups, and expands validation to rolling historical periods. It includes an optional volatility-scaled Ridge model. The historical models remain unapproved; installing this release does not enable trading.
+Version 1.5 adds bounded-memory training, resumable Binance/Coinbase data adapters, stable streaming QR fitting, optional compiled CPU inference, and cached live forecasts. All new models remain unapproved.
 
-Read the [1.1 audit and research report](reports/v1.1/RELEASE.md), [operations guide](docs/OPERATIONS.md), [locked experiment protocol](reports/v1.1/PROTOCOL.json), [evaluation](reports/v1.1/evaluation.json), and [engineering benchmark](reports/v1.1/benchmark.json).
+Read the [1.5 setup and large-data guide](docs/V1.5.md), [release results](reports/v1.5/RELEASE.md), and [operations guide](docs/OPERATIONS.md). Previous [1.1 research](reports/v1.1/RELEASE.md) remains available.
 
-## Measured changes
+## Measured changes from 1.1
 
-| Measure | v1.0 | v1.1 |
-|---|---:|---:|
-| Median feature calculation, same 10,000 candles | 132.61 ms | 6.38 ms |
-| Database after 10,000 idle ticks | 3,252,224 bytes | 491,520 bytes |
-| Idle audit rows in that workload | 10,000 | 0 |
-| Recent timing samples retained | Unbounded | 4,096 per series |
-| Unique automated tests | 43 | 65 |
+| Workload | v1.1 | v1.5 | Speedup |
+|---|---:|---:|---:|
+| 100,000 predictions, warmed compiled batch | 670.09 ms | 0.918 ms | 729.8× |
+| 100,000 quote decisions within the same candle | 724.30 ms | 43.73 ms | 16.6× |
+| 100,000 predictions, NumPy-only batch | 686.75 ms | 9.77 ms | 70.3× |
 
-Feature computation was approximately 20.8× faster. The idle ledger workload itself took 0.540 s versus 0.565 s, so not every path became faster. Figures describe the development environment, not the dedicated i7 PC or Binance execution. Numerical feature equivalence was checked within tolerance. Trade audit rows remain retained.
+These are CPU microbenchmarks on synthetic feature vectors in the development environment. They exclude data preparation, accounting, network, and order execution. **The whole bot has not been demonstrated to be 200× faster.** The optional compiled batch path exceeds that target for the measured workload. Numerical prediction differences were below 1e-10 bps.
 
-## Install on the dedicated PC
+Training processed 527,040 existing Binance candles with a larger chronological fitting window and about 36 MiB peak RSS per process. A 30+ GB run and fresh Coinbase acquisition were not completed: public downloads timed out here. The new pipeline processes files in chunks, and the guide provides commands for larger datasets and additional venues. Historical forecasts did not beat a zero-return baseline. There are 82 automated tests.
 
-Use Ubuntu Desktop 24.04 LTS and Python 3.12. The i7-9700F, 16 GB RAM, RX 570, and SSD are sufficient for this workload; GPU acceleration is not required.
+## Requirements
+
+| Component | Suggested minimum | Recommended for larger research |
+|---|---|---|
+| CPU | 64-bit x86, 2 cores | 4+ cores |
+| System RAM | 4 GB | 8–16 GB |
+| Free project storage, excluding OS | 5 GB | SSD with 100 GB for a 30 GB corpus and working space |
+| GPU | Not required | Not required |
+| Software | Ubuntu 24.04 LTS, Python 3.12, Git | Same; optional Numba for compiled batch inference |
+| Network | Stable HTTPS/WebSocket access and synchronized clock | Wired connection, locally measured latency |
+
+These are planning budgets, not certified hardware minima. See the [full requirements and platform matrix](docs/REQUIREMENTS.md), including untested platforms and data compatibility.
+
+## Quick start
+
+Install Ubuntu 24.04 LTS Desktop or Server using its standard installer, preserving any existing data that must be retained. Open a terminal and run:
 
 ```bash
 sudo apt update
@@ -43,7 +56,7 @@ python -m engine_v1.latency --samples 100 --location user-pc --output data/laten
 python -m engine_v1.operations status --file data/observe-health.json
 ```
 
-No API keys are required. The observer works without models or a portfolio database. Local profiles expire after 24 hours; eligibility is recomputed from raw timing samples. REST RTT and WebSocket interarrival are not order-execution latency. The PC must remain awake and its clock synchronized.
+No API keys are required. The observer works without models or a portfolio database. Local profiles expire after 24 hours; eligibility is recomputed from raw timing samples. REST RTT and WebSocket interarrival are not order-execution latency. The runtime host must remain awake and its clock synchronized.
 
 ## Two virtual accounts
 
@@ -68,7 +81,7 @@ Ctrl+C stops without liquidation. `FLATTEN` cannot liquidate a position without 
 
 ## Upgrade and preserve data
 
-Stop the old coordinator and update with `git pull --ff-only origin develop`. Install requirements and run tests again. The new database is `data/v11-paper.sqlite3`; the old `data/v1-paper.sqlite3` is preserved and is not migrated. New virtual balances start independently. Back up a running 1.1 ledger with:
+Stop the old coordinator and update with `git pull --ff-only origin develop`. Install requirements and run tests again. Version 1.5 continues using the 1.1 database at `data/v11-paper.sqlite3`, preserving existing 1.1 balances. Version 1.0 ledgers at `data/v1-paper.sqlite3` are not migrated; a separate 1.1/1.5 ledger starts with independent virtual balances. Back up a running compatible ledger with:
 
 ```bash
 python -m engine_v1.operations backup data/v11-paper.sqlite3 data/backups/first.sqlite3
@@ -76,24 +89,38 @@ python -m engine_v1.operations backup data/v11-paper.sqlite3 data/backups/first.
 
 The destination must be new. Financial configuration changes still require a separate database; refreshing a transient quote deadline does not reset balances. Trade history is retained, idle events are omitted, and old deduplication rows are pruned with timestamp replay protection.
 
-## Reproduce research
+## Train and benchmark v1.5
+
+Install the optional compiled backend and run the local benchmark:
 
 ```bash
-python download_v11_data.py
-python train_v11.py
-python benchmark_v11.py
+python -m pip install -r requirements-fast.txt
+python benchmark_v15.py --compiled --output data/benchmark-v15-local.json
 ```
 
-The experiment uses 527,040 official one-minute BTC/ETH candles across April–September 2025. Twelve archive checksums are verified. For each July, August, and September evaluation, the preceding 56 days are split into 28 fitting, 14 calibration, and 14 selection days. Three horizons and two Ridge variants are compared; cash is an explicit deployment alternative. Daily block-bootstrap intervals and out-of-sample error/coverage are reported.
+Acquire a research dataset and train with explicit chronological boundaries:
 
-Raw CSVs and detailed trade logs are generated locally. Concise results, hashes, and historical model artifacts are committed. The benchmark requires the original v1.0 commit in Git history. Historical results and normalized per-second averages are not income forecasts. No parameters are retuned after viewing these test months.
+```bash
+python download_v15_data.py --source binance --symbol BTCUSDT \
+  --start 2025-04-01 --end 2025-10-01 --root data/market
+python train_v15.py --venue binance --symbol BTCUSDT \
+  --files data/market/binance-BTCUSDT-*.csv \
+  --train-end 2025-09-08 --calibration-end 2025-09-15 --test-end 2025-10-01 \
+  --output data/research-v15 --compiled
+```
+
+The [training guide](docs/V1.5.md) covers Coinbase, multiple instruments, local imports, resumable downloads, and datasets larger than RAM. These historical dates reproduce the release's retrospective window; they are not current trading signals. Research output does not replace active models. Raw datasets stay outside Git. Archived [1.1 research](reports/v1.1/RELEASE.md) retains its original reproduction commands and results.
 
 ## Remaining scope
 
-This is spot-only, long-only paper research. No futures, funding, margin, real/testnet execution, broker reconciliation, partial fills, queue simulation, or authenticated accounts are implemented. Capital.com and Hapi are not integrated into the new engine. One-minute candles cannot validate subsecond execution. BookTicker lacks an exchange event timestamp, and a receipt-age check cannot establish source freshness. Continuous operation on the dedicated PC and its ENTEL connection remains unverified.
+This is spot-only, long-only paper research. No futures, funding, margin, real/testnet execution, broker reconciliation, partial fills, queue simulation, or authenticated accounts are implemented. Capital.com and Hapi are not integrated into the new engine. One-minute candles cannot validate subsecond execution. BookTicker lacks an exchange event timestamp, and a receipt-age check cannot establish source freshness. Continuous unattended operation must be validated on each deployment host and connection.
 
-Archived release documentation: [v1.0](docs/V1.0.md) and [v0.2](docs/V0.2.md). Their scope statements apply to those releases. The `engine_v1` package name is retained for command compatibility; its current version is 1.1.0.
+Archived release documentation: [v1.0](docs/V1.0.md) and [v0.2](docs/V0.2.md). Their scope statements apply to those releases. The `engine_v1` package name is retained for command compatibility; its current version is 1.5.0.
 
 ## Project language
 
 All new documentation, comments, user-facing messages, and commit messages must be written in English.
+
+## License and contributions
+
+This project is distributed under the [MIT License](LICENSE). See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, tests, and reproducible performance reports.

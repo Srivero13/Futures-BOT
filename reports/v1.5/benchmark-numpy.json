@@ -1,0 +1,54 @@
+{
+  "version": "1.5",
+  "python": "3.12.14",
+  "numpy": "2.3.5",
+  "machine": "x86_64",
+  "processor": "x86_64",
+  "rows": 100000,
+  "backend": "numpy",
+  "cold_batch_seconds": 0.02249797300009959,
+  "v11_batch_scalar_loop": {
+    "median_seconds": 0.6867454000000635,
+    "samples_seconds": [
+      0.6867454000000635,
+      0.6905765369999699,
+      0.7170615249999628,
+      0.6838145560000157,
+      0.6699652480000395
+    ]
+  },
+  "v15_batch": {
+    "median_seconds": 0.009773094000024685,
+    "samples_seconds": [
+      0.009773094000024685,
+      0.009068745999911698,
+      0.010523681999984547,
+      0.01134569799990004,
+      0.009474404999991748
+    ]
+  },
+  "batch_speedup": 70.26898544087767,
+  "v11_repeated_quote_decisions": {
+    "median_seconds": 0.7471400140000242,
+    "samples_seconds": [
+      0.7478833210000175,
+      0.7471400140000242,
+      0.7362281079999775,
+      0.7553631900000255,
+      0.7461446249999426
+    ]
+  },
+  "v15_cached_quote_decisions": {
+    "median_seconds": 0.045945445000029395,
+    "samples_seconds": [
+      0.04657570200004102,
+      0.045945445000029395,
+      0.044174845000043206,
+      0.04472713499990277,
+      0.046558877000052235
+    ]
+  },
+  "cached_quote_speedup": 16.26145995537852,
+  "max_prediction_error_bps": 2.220446049250313e-16,
+  "scope": "Synthetic valid float64 features; warm CPU batch throughput and repeated same-candle decisions. Excludes I/O, feature generation, ledger, network, and initial forecast for the cached workload. No total-bot or deployment-host speed claim."
+}

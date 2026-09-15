@@ -8,4 +8,4 @@
 - 51,840 OHLCV candles are included; three training candidates per symbol and 22 validation/holdout evaluations, totaling 28 simulations.
 - Full results and curves are included. Parameters were not reoptimized after viewing the final evaluation.
 - Paper reporting rejects inconsistent initial capital and suppresses temporal rates for synthetic data and sessions shorter than one hour.
-- No orders were sent. Windows and the user's hardware were not tested. There is no evidence of future profitability.
+- No orders were sent. Windows and deployment-specific hardware were not tested. There is no evidence of future profitability.

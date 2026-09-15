@@ -55,7 +55,7 @@ Total virtual capital: 2,000 USDT. Combined PnL: -12.798987 USDT. Maximum combin
 
 ## Measured requirements
 
-The full benchmark took 86.15 seconds in the development environment, with peak Python allocations of 25.60 MiB measured using tracemalloc. This is NOT total process RAM or a measurement of the user's i7; instrumentation adds overhead. It cannot establish trading latency. No GPU or external packages are used.
+The full benchmark took 86.15 seconds in the development environment, with peak Python allocations of 25.60 MiB measured using tracemalloc. This is NOT total process RAM or a measurement of deployment hardware; instrumentation adds overhead. It cannot establish trading latency. No GPU or external packages are used.
 
 ## Limitations and reproducibility
 
