@@ -123,3 +123,7 @@ Use the offline [one-minute execution backtest](docs/EXECUTION_BACKTEST.md) to
 measure simulated net P&L, costs, drawdown, and non-overlapping trades from an
 existing model. It includes explicit whole-bar delay assumptions and never
 approves a model or sends orders.
+
+If a model produces zero trades, use the [forecast diagnostics](docs/FORECAST_DIAGNOSTICS.md)
+to distinguish raw forecasts below costs from candidates blocked by the calibration
+buffer. Diagnostics preserve the existing model and entry assumptions.
