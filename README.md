@@ -116,3 +116,10 @@ All new documentation, comments, user-facing messages, and commit messages must 
 ## License and contributions
 
 This project is distributed under the [MIT License](LICENSE). See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, tests, and reproducible performance reports.
+
+### Execute historical v1.6 model signals
+
+Use the offline [one-minute execution backtest](docs/EXECUTION_BACKTEST.md) to
+measure simulated net P&L, costs, drawdown, and non-overlapping trades from an
+existing model. It includes explicit whole-bar delay assumptions and never
+approves a model or sends orders.
