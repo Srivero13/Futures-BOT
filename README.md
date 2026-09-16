@@ -1,6 +1,8 @@
-# Futures-BOT 1.6.1 — research and paper trading
+# Futures-BOT 1.6.2 — research and paper trading
 
 A CPU-based Binance spot research engine with two virtual accounts, Decimal accounting, a calibrated model interface, and a supervised WebSocket coordinator. **No real orders are sent. No profitable strategy has been demonstrated.**
+
+Patch 1.6.2 treats the final deadline-bounded socket read timeout as normal session completion, avoiding a false reconnect/error at the requested end time. Earlier read timeouts and continuous-session failures still trigger recovery.
 
 Patch 1.6.1 adds periodic observer/paper console progress, including connection state, elapsed/remaining time, message counts, receipt-fresh quotes, and errors. See [progress options](docs/START_HERE.md#console-progress).
 
@@ -105,7 +107,7 @@ These historical dates reproduce the release's retrospective window; they are no
 
 This is spot-only, long-only paper research. No futures, funding, margin, real/testnet execution, broker reconciliation, partial fills, queue simulation, or authenticated accounts are implemented. Capital.com and Hapi are not integrated into the new engine. One-minute candles cannot validate subsecond execution. BookTicker lacks an exchange event timestamp, and a receipt-age check cannot establish source freshness. Continuous unattended operation must be validated on each deployment host and connection.
 
-Archived release documentation: [v1.0](docs/V1.0.md) and [v0.2](docs/V0.2.md). Their scope statements apply to those releases. The `engine_v1` package name is retained for command compatibility; its current version is 1.6.1.
+Archived release documentation: [v1.0](docs/V1.0.md) and [v0.2](docs/V0.2.md). Their scope statements apply to those releases. The `engine_v1` package name is retained for command compatibility; its current version is 1.6.2.
 
 ## Project language
 
@@ -114,3 +116,10 @@ All new documentation, comments, user-facing messages, and commit messages must 
 ## License and contributions
 
 This project is distributed under the [MIT License](LICENSE). See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, tests, and reproducible performance reports.
+
+### Execute historical v1.6 model signals
+
+Use the offline [one-minute execution backtest](docs/EXECUTION_BACKTEST.md) to
+measure simulated net P&L, costs, drawdown, and non-overlapping trades from an
+existing model. It includes explicit whole-bar delay assumptions and never
+approves a model or sends orders.
