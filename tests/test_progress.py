@@ -64,3 +64,49 @@ class ProgressTests(unittest.TestCase):
             self.assertIn('messages=1 ',stderr.getvalue())
             self.assertEqual(json.loads((Path(tmp)/'health.json').read_text())['connection_state'],'stopped')
             sock.close.assert_called_once()
+
+    def timeout_session(self, timeout_at, duration=10):
+        from websocket import WebSocketTimeoutException
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg=Path(tmp)/'config.json'
+            cfg.write_text(json.dumps({'mode':'paper','accounts':[{'id':'a','symbol':'BTCUSDT'}],
+                'model_directory':'missing','database':str(Path(tmp)/'unused.db')}))
+            now=[0.];calls=[0];sock=Mock();stderr=io.StringIO()
+            def receive():
+                calls[0]+=1
+                if calls[0]==1:
+                    return json.dumps({'s':'BTCUSDT','u':1,'b':'100','a':'101','B':'2','A':'2'})
+                if calls[0]==2:
+                    now[0]=timeout_at
+                    raise WebSocketTimeoutException('timed out')
+                raise KeyboardInterrupt
+            def sleep(seconds):now[0]+=seconds
+            sock.recv.side_effect=receive
+            with patch('engine_v1.stream.time.monotonic',side_effect=lambda:now[0]),patch('engine_v1.stream.time.sleep',side_effect=sleep),patch('engine_v1.stream.websocket.create_connection',return_value=sock) as connect,patch('sys.stderr',stderr):
+                result=stream(duration,config_path=cfg,health_path=Path(tmp)/'health.json')
+            health=json.loads((Path(tmp)/'health.json').read_text())
+            return result,health,stderr.getvalue(),connect.call_count,sock
+
+    def test_deadline_read_timeout_finishes_without_false_reconnect(self):
+        result,health,output,connections,sock=self.timeout_session(10)
+        self.assertEqual(result['messages'],1)
+        self.assertEqual(result['reconnects'],0)
+        self.assertEqual(result['errors'],{})
+        self.assertEqual(connections,1)
+        self.assertNotIn('retrying',output)
+        self.assertFalse(health['running'])
+        self.assertEqual(health['connection_state'],'stopped')
+        sock.close.assert_called_once()
+
+    def test_early_timeout_still_records_failure_and_reconnects(self):
+        result,_,output,connections,_=self.timeout_session(5)
+        self.assertEqual(result['reconnects'],1)
+        self.assertEqual(result['errors'],{'WebSocketTimeoutException':1})
+        self.assertEqual(connections,2)
+        self.assertIn('retrying',output)
+
+    def test_continuous_session_timeout_is_never_treated_as_deadline(self):
+        result,_,_,connections,_=self.timeout_session(10,duration=0)
+        self.assertEqual(result['reconnects'],1)
+        self.assertEqual(result['errors'],{'WebSocketTimeoutException':1})
+        self.assertEqual(connections,2)

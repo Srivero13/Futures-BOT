@@ -1,4 +1,4 @@
-# Start here: Futures-BOT 1.6.1
+# Start here: Futures-BOT 1.6.2
 
 This guide installs a CPU-based research environment, checks it, observes public prices, and trains a model. No API keys or funded exchange accounts are needed. The included engine sends no real orders. A successful training run is not approval to trade.
 
@@ -121,3 +121,5 @@ Zero disables console progress. Other values must be finite and at least one sec
 Progress is flushed to stderr; the final JSON and existing paper trade events remain on stdout. Broken/closed progress output disables the reporter without causing a feed reconnect. Health JSON remains available and now includes `connection_state`.
 
 To update, let any existing observation or training session finish first, then run `git pull --ff-only origin develop` from the checkout. Publishing to GitHub does not update another computer or change its running process. Progress appears on the next launch; current model artifacts, training code, and datasets are unaffected by this patch.
+
+In 1.6.2, a socket read timeout at or after the requested finite-session deadline ends the session normally. Earlier timeouts still count as failures and trigger recovery; continuous sessions have no deadline exemption. Previous versions could count the normal final read expiry as a timeout/reconnect. Other connection failures are not suppressed.

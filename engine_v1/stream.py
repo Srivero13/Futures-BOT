@@ -130,7 +130,7 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
     def health(running=True,force_progress=False):
         now=int(time.time()*1000)
         ages={s:now-q.timestamp_ms for s,q in feed.quotes.items()}
-        atomic_json(health_path,{'version':'1.6.1','running':running,'observe_only':observe,'timestamp_ms':now,
+        atomic_json(health_path,{'version':'1.6.2','running':running,'observe_only':observe,'timestamp_ms':now,
             'messages':events,'reconnects':reconnects,'errors':dict(errors),'clock_ok':clock_ok,
             'connection_state':connection_state if running else 'stopped',
             'quote_age_ms':ages,'warm_candles':{s:len(r) for s,r in feed.rows.items()},'entry_gates':gates,
@@ -161,8 +161,16 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
                     connection_state='connected';health(force_progress=True)
                     connection_start=time.monotonic()
                     while remaining()>0:
-                        sock.settimeout(min(5,remaining()))
-                        raw=sock.recv();mono=time.monotonic();now=int(time.time()*1000)
+                        read_budget=remaining()
+                        if read_budget<=0:break
+                        sock.settimeout(min(5,read_budget))
+                        try:raw=sock.recv()
+                        except websocket.WebSocketTimeoutException:
+                            # The final read is deliberately bounded by the session deadline.
+                            # Expiring that budget is normal completion, not a reconnect.
+                            if duration and remaining()<=0:break
+                            raise
+                        mono=time.monotonic();now=int(time.time()*1000)
                         if not raw:raise ConnectionError('WebSocket closed')
                         if abs((now-wall_start)-(mono-start)*1000)>250:
                             clock_ok=False;feed.reset_quotes();features.clear()
@@ -214,7 +222,7 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
             try:health(False)
             finally:
                 if engine is not None:engine.close()
-    return {'version':'1.6.1','location':'current-runtime','observe_only':observe,'messages':events,'reconnects':reconnects,
+    return {'version':'1.6.2','location':'current-runtime','observe_only':observe,'messages':events,'reconnects':reconnects,
         'errors':dict(errors),'duration_seconds':time.monotonic()-start,'clock_ok':clock_ok,
         'interarrival_p95_ms':percentile(gaps,.95),'kline_lag_p95_ms':percentile(lags,.95),
         'decision_compute_p99_ms':percentile(costs,.99),'sample_window':4096,
