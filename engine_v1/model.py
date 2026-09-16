@@ -73,7 +73,8 @@ class RidgeModel:
 
     def save(self,path):
         payload=asdict(self);body=json.dumps(payload,sort_keys=True,allow_nan=False)
-        path.write_text(json.dumps({'model':payload,'sha256':hashlib.sha256(body.encode()).hexdigest()},indent=2))
+        from .operations import atomic_json
+        atomic_json(path,{'model':payload,'sha256':hashlib.sha256(body.encode()).hexdigest()})
 
     @classmethod
     def load(cls,path):
@@ -81,11 +82,15 @@ class RidgeModel:
         if hashlib.sha256(json.dumps(p,sort_keys=True,allow_nan=False).encode()).hexdigest()!=wrapper['sha256']:
             raise ValueError('Model checksum mismatch')
         model=cls(**p)
-        if model.features!=FEATURES and list(model.features)!=FEATURES:raise ValueError('Feature schema mismatch')
-        if not len(model.mean)==len(model.scale)==len(model.coef)==len(FEATURES):raise ValueError('Invalid model dimension')
+        expected=list(cls.__dataclass_fields__['features'].default)
+        if list(model.features)!=expected:raise ValueError('Feature schema mismatch')
+        if not len(model.mean)==len(model.scale)==len(model.coef)==len(expected):raise ValueError('Invalid model dimension')
         if not all(math.isfinite(v) for v in model.mean+model.scale+model.coef+[model.intercept,model.downside_buffer_bps]):raise ValueError('Non-finite model')
         if type(model.approved) is not bool or type(model.volatility_scaled) is not bool or not math.isfinite(model.volatility_floor) or model.volatility_floor<=0 or model.downside_buffer_bps<0 or not 0<=model.train_end_ms<=model.calibration_end_ms:raise ValueError('Invalid model metadata')
         if min(model.scale)<=0 or model.horizon_bars not in (1,3,5) or model.timeframe_ms!=60000:raise ValueError('Invalid model schema')
+        if not math.isfinite(model.alpha) or model.alpha<=0:raise ValueError('Invalid regularization')
+        if any(type(v) is not int or v<0 for v in (model.fit_rows,model.calibration_rows,model.train_end_ms,model.calibration_end_ms)):raise ValueError('Invalid sample metadata')
+        if any(not math.isfinite(v) or v<0 for v in (model.calibration_rmse_bps,model.zero_forecast_rmse_bps)):raise ValueError('Invalid error metadata')
         return model
 
 

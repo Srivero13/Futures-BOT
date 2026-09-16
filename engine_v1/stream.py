@@ -13,6 +13,8 @@ from .core import Portfolio,Quote,Rules,dec,break_even_bps
 from .latency import percentile,policy as timing_policy
 from .model import RidgeModel,feature_matrix
 from .fast import forecast,cost_gate
+from .nonlinear import load_model
+from .progress import ProgressReporter
 from .operations import atomic_json,process_lock
 ROOT=Path(__file__).resolve().parent.parent
 
@@ -86,8 +88,27 @@ def entry_gate(model,feed,symbol,now,profile,paused=False,clock_ok=True):
     return 'ready'
 
 
-def stream(duration=60,profile_path=None,observe=True,config_path=None,health_path=None):
+
+def fetch_rules(symbols, remaining, heartbeat):
+    """Retry read-only exchange metadata within the startup time budget."""
+    for attempt in range(3):
+        try:
+            if remaining() <= 0: raise TimeoutError('Startup time budget expired')
+            with urlopen('https://api.binance.com/api/v3/exchangeInfo', timeout=min(5, remaining())) as response:
+                info = json.load(response)
+            rules = {item['symbol']: rules_from_exchange(item) for item in info['symbols'] if item['symbol'] in symbols}
+            if set(rules) != symbols: raise ValueError('Missing trading rules')
+            return rules
+        except OSError:
+            heartbeat()
+            if attempt == 2 or remaining() <= 0: raise
+            time.sleep(min(attempt + 1, remaining()))
+
+
+def stream(duration=60,profile_path=None,observe=True,config_path=None,health_path=None,progress_interval=5):
     if duration<0:raise ValueError('Duration must be nonnegative; zero runs until interrupted')
+    reporter=ProgressReporter(progress_interval)
+    connection_state='starting'
     cfg=json.loads(Path(config_path or ROOT/'configs/v11-paper.json').read_text())
     if cfg['mode']!='paper':raise ValueError('Only paper mode is implemented')
     profile=load_profile(profile_path,int(time.time()*1000)) if not observe else None
@@ -95,7 +116,7 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
     accounts=cfg['accounts'];symbols={a['symbol'] for a in accounts}
     if not symbols or any(not s.isalnum() for s in symbols):raise ValueError('Invalid symbols')
     model_dir=ROOT/cfg['model_directory']
-    models={s:RidgeModel.load(model_dir/f'{s}-v1.json') for s in symbols} if not observe else {}
+    models={s:load_model(model_dir/f'{s}-v1.json') for s in symbols} if not observe else {}
     for a in accounts:
         if not observe:
             if models[a['symbol']].symbol!=a['symbol']:raise ValueError('Model symbol mismatch')
@@ -106,29 +127,38 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
     last_decision=0.;last_health=-1e9;last_prune=0.;last_received=None;clock_ok=True;engine=None
     gaps=deque(maxlen=4096);lags=deque(maxlen=4096);costs=deque(maxlen=4096);errors=Counter();gates={};features={}
     def remaining():return max(0.,duration-(time.monotonic()-start)) if duration else float('inf')
-    def health(running=True):
+    def health(running=True,force_progress=False):
         now=int(time.time()*1000)
         ages={s:now-q.timestamp_ms for s,q in feed.quotes.items()}
-        atomic_json(health_path,{'version':'1.5.0','running':running,'observe_only':observe,'timestamp_ms':now,
+        atomic_json(health_path,{'version':'1.6.1','running':running,'observe_only':observe,'timestamp_ms':now,
             'messages':events,'reconnects':reconnects,'errors':dict(errors),'clock_ok':clock_ok,
+            'connection_state':connection_state if running else 'stopped',
             'quote_age_ms':ages,'warm_candles':{s:len(r) for s,r in feed.rows.items()},'entry_gates':gates,
             'accounts':engine.states() if engine else [],'valuation_note':'last_equity is a historical mark, not a current executable balance',
             'decision_compute_p99_ms':percentile(costs,.99),'sample_window':4096})
+        reporter.update(state=connection_state if running else 'stopped', observe=observe,
+            elapsed=time.monotonic()-start, duration=duration, messages=events,
+            reconnects=reconnects, errors=sum(errors.values()),
+            fresh=sum(0<=age<=policy['quote_deadline_ms'] for age in ages.values()),
+            symbols=len(symbols), warm=min((len(feed.rows.get(s,())) for s in symbols),default=0),
+            clock_ok=clock_ok, force=force_progress or not running)
     lock=process_lock(str(db_path)+'.lock') if not observe else nullcontext()
     with lock:
         try:
             if not observe:
                 engine=Portfolio(db_path,accounts,max_age_ms=policy['quote_deadline_ms'],**cfg['risk'])
-                with urlopen('https://api.binance.com/api/v3/exchangeInfo',timeout=5) as r:info=json.load(r)
-                rules={s['symbol']:rules_from_exchange(s) for s in info['symbols'] if s['symbol'] in symbols}
-                if set(rules)!=symbols:raise ValueError('Missing trading rules')
+                health(force_progress=True)
+                rules=fetch_rules(symbols,remaining,health)
+            else:health(force_progress=True)
             names='/'.join(f'{s.lower()}@bookTicker/{s.lower()}@kline_1m' for s in sorted(symbols))
             url='wss://stream.binance.com:443/stream?streams='+names
             failures=0
             while remaining()>0:
                 sock=None;feed.reset_quotes();features.clear();last_received=None;gates={a['id']:'feed_disconnected' for a in accounts}
                 try:
-                    health();sock=websocket.create_connection(url,timeout=min(5,remaining()))
+                    connection_state='connecting';health(force_progress=True)
+                    sock=websocket.create_connection(url,timeout=min(5,remaining()))
+                    connection_state='connected';health(force_progress=True)
                     connection_start=time.monotonic()
                     while remaining()>0:
                         sock.settimeout(min(5,remaining()))
@@ -136,7 +166,7 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
                         if not raw:raise ConnectionError('WebSocket closed')
                         if abs((now-wall_start)-(mono-start)*1000)>250:
                             clock_ok=False;feed.reset_quotes();features.clear()
-                        if mono-last_health>=5:health();last_health=mono
+                        if mono-last_health>=min(5,progress_interval or 5):health();last_health=mono
                         message=json.loads(raw);d=message.get('data',message)
                         if d.get('e')=='serverShutdown':raise ConnectionError('Scheduled shutdown')
                         if d.get('s') not in symbols:continue
@@ -168,19 +198,23 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
                             if mono-last_prune>=300:engine.prune(now);last_prune=mono
                 except (OSError,ValueError,KeyError,TypeError,websocket.WebSocketException) as exc:
                     errors[type(exc).__name__]+=1;reconnects+=1;failures+=1;feed.reset_quotes();features.clear()
-                    gates={a['id']:'feed_disconnected' for a in accounts};health()
+                    gates={a['id']:'feed_disconnected' for a in accounts}
+                    connection_state='retrying';health(force_progress=True)
                     delay=min(30,2**min(failures,5))*(.8+.2*random.random())
                     # Refresh heartbeat while waiting; empty quotes expose the outage.
                     deadline=time.monotonic()+min(remaining(),delay)
                     while time.monotonic()<deadline:
                         time.sleep(max(0,min(1,deadline-time.monotonic())));health()
                 finally:
-                    if sock is not None:sock.close()
+                    if sock is not None:
+                        try:sock.close()
+                        except (OSError,websocket.WebSocketException):errors['close_failure']+=1
         except KeyboardInterrupt:pass
         finally:
-            health(False)
-            if engine is not None:engine.close()
-    return {'version':'1.5.0','location':'current-runtime','observe_only':observe,'messages':events,'reconnects':reconnects,
+            try:health(False)
+            finally:
+                if engine is not None:engine.close()
+    return {'version':'1.6.1','location':'current-runtime','observe_only':observe,'messages':events,'reconnects':reconnects,
         'errors':dict(errors),'duration_seconds':time.monotonic()-start,'clock_ok':clock_ok,
         'interarrival_p95_ms':percentile(gaps,.95),'kline_lag_p95_ms':percentile(lags,.95),
         'decision_compute_p99_ms':percentile(costs,.99),'sample_window':4096,
@@ -190,7 +224,8 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--seconds',type=int,default=60);p.add_argument('--profile')
     p.add_argument('--paper',action='store_true');p.add_argument('--config');p.add_argument('--health')
+    p.add_argument('--progress-seconds',type=float,default=5,help='Console progress interval, minimum 1 second; 0 disables progress')
     p.add_argument('--output',default='data/stream-probe.json');a=p.parse_args()
     if a.paper and not a.profile:p.error('--paper requires --profile')
-    result=stream(a.seconds,a.profile,not a.paper,a.config,a.health);atomic_json(a.output,result);print(json.dumps(result,indent=2))
+    result=stream(a.seconds,a.profile,not a.paper,a.config,a.health,progress_interval=a.progress_seconds);atomic_json(a.output,result);print(json.dumps(result,indent=2))
 if __name__=='__main__':main()

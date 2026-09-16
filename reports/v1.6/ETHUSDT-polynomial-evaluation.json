@@ -1,0 +1,49 @@
+{
+  "version": "1.6",
+  "run_id": "af5718335a94360cf2da0fdff223a5dc63865cba1f7bf4d7ecc0a5039243c2db",
+  "spec": {
+    "version": "1.6",
+    "algorithm_sha256": "b175580ac3bc411c144d13e1903db64027cb742880ea6c22a6457fae936f73bf",
+    "numpy": "2.3.5",
+    "python": "3.12.14",
+    "venue": "binance",
+    "symbol": "ETHUSDT",
+    "model_kind": "polynomial",
+    "horizon": 3,
+    "alpha": 10.0,
+    "chunk_size": 4096,
+    "train_end_ms": 1757289600000,
+    "calibration_end_ms": 1757894400000,
+    "test_end_ms": 1759276800000,
+    "sources": [
+      {
+        "file": "ETHUSDT-1m-2025Q2Q3.csv",
+        "sha256": "40e3c4812aea0cf5ab74a5e15fd6133effccd96bba99ce01cd33585667cd1705",
+        "bytes": 21310592,
+        "provenance": "Local import; venue supplied by operator"
+      }
+    ]
+  },
+  "fit_rows": 230376,
+  "calibration_rows": 3359,
+  "feature_count": 27,
+  "calibration": {
+    "calibration_reservoir_rows": 3359,
+    "quantile_is_approximate": false
+  },
+  "holdout": {
+    "examples": 23037,
+    "accepted": 22925,
+    "ood_rejected": 112,
+    "rmse_log_bps": 11.533512458741269,
+    "zero_rmse_log_bps_same_accepted_rows": 11.53308656669647,
+    "lower_bound_coverage": 0.8848854961832061,
+    "cost_gate_candidates": 0,
+    "cost_assumption_bps": 26,
+    "pnl": null,
+    "note": "Forecast diagnostics, not an execution backtest; overlapping holdout labels."
+  },
+  "approved": false,
+  "elapsed_this_attempt_seconds": 8.758395306000011,
+  "note": "Historical forecast diagnostics, not P&L. Resumption is from a completed fit, not a partial QR pass."
+}

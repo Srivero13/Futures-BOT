@@ -1,0 +1,32 @@
+{
+  "version": "1.6",
+  "ready": true,
+  "checks": [
+    {
+      "check": "python",
+      "ok": true,
+      "detail": "3.12.14; documented/tested target is Python 3.12"
+    },
+    {
+      "check": "numpy",
+      "ok": true,
+      "detail": "2.3.5; reinstall requirements.txt if this check fails"
+    },
+    {
+      "check": "websocket-client",
+      "ok": true,
+      "detail": "1.8.0; reinstall requirements.txt if this check fails"
+    },
+    {
+      "check": "output_disk",
+      "ok": true,
+      "detail": "29.3 GiB free; minimum reserve is 1 GiB"
+    },
+    {
+      "check": "offline_smoke",
+      "ok": true,
+      "detail": "Features, model checksums and in-memory paper ledger passed; no orders sent"
+    }
+  ],
+  "scope": "Offline checks only. Does not certify network access, hardware stability, clock sync, strategy quality or unattended operation."
+}

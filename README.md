@@ -1,22 +1,20 @@
-# Futures-BOT 1.5 — research and paper trading
+# Futures-BOT 1.6.1 — research and paper trading
 
 A CPU-based Binance spot research engine with two virtual accounts, Decimal accounting, a calibrated model interface, and a supervised WebSocket coordinator. **No real orders are sent. No profitable strategy has been demonstrated.**
 
-Version 1.5 adds bounded-memory training, resumable Binance/Coinbase data adapters, stable streaming QR fitting, optional compiled CPU inference, and cached live forecasts. All new models remain unapproved.
+Patch 1.6.1 adds periodic observer/paper console progress, including connection state, elapsed/remaining time, message counts, receipt-fresh quotes, and errors. See [progress options](docs/START_HERE.md#console-progress).
 
-Read the [1.5 setup and large-data guide](docs/V1.5.md), [release results](reports/v1.5/RELEASE.md), and [operations guide](docs/OPERATIONS.md). Previous [1.1 research](reports/v1.1/RELEASE.md) remains available.
+Version 1.6 adds a 27-term nonlinear Ridge research model, a startup doctor, a guarded launcher, progress reporting, content-identified training runs, completed-fit recovery, and atomic artifacts. Existing Decimal accounting and paper risk controls remain in place. Complexity does not guarantee accuracy: the new models remain unapproved.
 
-## Measured changes from 1.1
+**New installation? Follow [Start here](docs/START_HERE.md).** See the [release audit and results](reports/v1.6/RELEASE.md), [requirements](docs/REQUIREMENTS.md), and [operations guide](docs/OPERATIONS.md).
 
-| Workload | v1.1 | v1.5 | Speedup |
-|---|---:|---:|---:|
-| 100,000 predictions, warmed compiled batch | 670.09 ms | 0.918 ms | 729.8× |
-| 100,000 quote decisions within the same candle | 724.30 ms | 43.73 ms | 16.6× |
-| 100,000 predictions, NumPy-only batch | 686.75 ms | 9.77 ms | 70.3× |
+## Release validation
 
-These are CPU microbenchmarks on synthetic feature vectors in the development environment. They exclude data preparation, accounting, network, and order execution. **The whole bot has not been demonstrated to be 200× faster.** The optional compiled batch path exceeds that target for the measured workload. Numerical prediction differences were below 1e-10 bps.
+The release includes failure tests for missing dependencies, insufficient data, low disk space, concurrent training, interrupted fits, evaluation recovery, modified inputs, corrupt artifacts, and failed shutdown health writes. A fresh virtual environment is checked separately. Detailed counts and results are recorded in the release report.
 
-Training processed 527,040 existing Binance candles with a larger chronological fitting window and about 36 MiB peak RSS per process. A 30+ GB run and fresh Coinbase acquisition were not completed: public downloads timed out here. The new pipeline processes files in chunks, and the guide provides commands for larger datasets and additional venues. Historical forecasts did not beat a zero-return baseline. There are 82 automated tests.
+Both linear and nonlinear models were evaluated on the same historical periods. On jointly accepted rows, neither beat the zero-return forecast. The five-second observer probe handled a proxy failure and exited cleanly; it did not establish live feed availability. No 30+ GB run or continuous unattended test has been completed.
+
+The [v1.5 benchmarks](reports/v1.5/RELEASE.md) remain archived. Their roughly 730× result applies to warmed compiled **linear batch inference**, not the nonlinear model or total-bot speed.
 
 ## Requirements
 
@@ -44,6 +42,7 @@ git clone --branch develop https://github.com/Srivero13/Futures-BOT.git
 cd Futures-BOT
 bash scripts/bootstrap.sh
 source .venv/bin/activate
+python doctor.py
 ```
 
 The setup script installs packages and runs tests; it does not start a service. See the [operations guide](docs/OPERATIONS.md) for OS settings, updates, backups, and the optional observer service. Windows code paths exist but were not validated here.
@@ -51,7 +50,7 @@ The setup script installs packages and runs tests; it does not start a service. 
 ## Observe and measure
 
 ```bash
-python -m engine_v1.stream --seconds 60 --output data/stream-local.json
+python start_bot.py --seconds 60 --output data/stream-local.json
 python -m engine_v1.latency --samples 100 --location user-pc --output data/latency-local.json
 python -m engine_v1.operations status --file data/observe-health.json
 ```
@@ -61,7 +60,7 @@ No API keys are required. The observer works without models or a portfolio datab
 ## Two virtual accounts
 
 ```bash
-python -m engine_v1.stream --paper --profile data/latency-local.json --seconds 3600
+python start_bot.py --paper --profile data/latency-local.json --seconds 3600
 python -m engine_v1.operations status
 ```
 
@@ -81,7 +80,7 @@ Ctrl+C stops without liquidation. `FLATTEN` cannot liquidate a position without 
 
 ## Upgrade and preserve data
 
-Stop the old coordinator and update with `git pull --ff-only origin develop`. Install requirements and run tests again. Version 1.5 continues using the 1.1 database at `data/v11-paper.sqlite3`, preserving existing 1.1 balances. Version 1.0 ledgers at `data/v1-paper.sqlite3` are not migrated; a separate 1.1/1.5 ledger starts with independent virtual balances. Back up a running compatible ledger with:
+Stop the old coordinator and update with `git pull --ff-only origin develop`. Install requirements and run tests again. Version 1.6 continues using the 1.1 database at `data/v11-paper.sqlite3`, preserving existing 1.1 balances. Version 1.0 ledgers at `data/v1-paper.sqlite3` are not migrated; a separate 1.1/1.6 ledger starts with independent virtual balances. Back up a running compatible ledger with:
 
 ```bash
 python -m engine_v1.operations backup data/v11-paper.sqlite3 data/backups/first.sqlite3
@@ -89,33 +88,24 @@ python -m engine_v1.operations backup data/v11-paper.sqlite3 data/backups/first.
 
 The destination must be new. Financial configuration changes still require a separate database; refreshing a transient quote deadline does not reset balances. Trade history is retained, idle events are omitted, and old deduplication rows are pruned with timestamp replay protection.
 
-## Train and benchmark v1.5
-
-Install the optional compiled backend and run the local benchmark:
-
-```bash
-python -m pip install -r requirements-fast.txt
-python benchmark_v15.py --compiled --output data/benchmark-v15-local.json
-```
-
-Acquire a research dataset and train with explicit chronological boundaries:
+## Train v1.6
 
 ```bash
 python download_v15_data.py --source binance --symbol BTCUSDT \
   --start 2025-04-01 --end 2025-10-01 --root data/market
-python train_v15.py --venue binance --symbol BTCUSDT \
+python train_v16.py --venue binance --symbol BTCUSDT \
   --files data/market/binance-BTCUSDT-*.csv \
   --train-end 2025-09-08 --calibration-end 2025-09-15 --test-end 2025-10-01 \
-  --output data/research-v15 --compiled
+  --model polynomial --chunk-size 4096 --output data/research-v16
 ```
 
-The [training guide](docs/V1.5.md) covers Coinbase, multiple instruments, local imports, resumable downloads, and datasets larger than RAM. These historical dates reproduce the release's retrospective window; they are not current trading signals. Research output does not replace active models. Raw datasets stay outside Git. Archived [1.1 research](reports/v1.1/RELEASE.md) retains its original reproduction commands and results.
+These historical dates reproduce the release's retrospective window; they are not current trading signals. Use `--model linear` for the baseline. Both use base dependencies and require no GPU. [Start here](docs/START_HERE.md) explains output files, progress, restart behavior, and troubleshooting. Repeating a command resumes from a completed fit when available; partial fitting passes restart. Research output never replaces active models automatically.
 
 ## Remaining scope
 
 This is spot-only, long-only paper research. No futures, funding, margin, real/testnet execution, broker reconciliation, partial fills, queue simulation, or authenticated accounts are implemented. Capital.com and Hapi are not integrated into the new engine. One-minute candles cannot validate subsecond execution. BookTicker lacks an exchange event timestamp, and a receipt-age check cannot establish source freshness. Continuous unattended operation must be validated on each deployment host and connection.
 
-Archived release documentation: [v1.0](docs/V1.0.md) and [v0.2](docs/V0.2.md). Their scope statements apply to those releases. The `engine_v1` package name is retained for command compatibility; its current version is 1.5.0.
+Archived release documentation: [v1.0](docs/V1.0.md) and [v0.2](docs/V0.2.md). Their scope statements apply to those releases. The `engine_v1` package name is retained for command compatibility; its current version is 1.6.1.
 
 ## Project language
 

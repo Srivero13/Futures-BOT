@@ -1,0 +1,15 @@
+{
+  "version": "1.6",
+  "purpose": "Retrospective comparison on identical samples; data already examined in v1.5",
+  "models": ["linear", "polynomial"],
+  "horizon": 3,
+  "alpha": 10.0,
+  "chunk_size": 4096,
+  "train_end": "2025-09-08",
+  "calibration_end": "2025-09-15",
+  "test_end": "2025-10-01",
+  "symbols": ["BTCUSDT", "ETHUSDT"],
+  "data": "Existing Binance April-September 2025 one-minute candles",
+  "selection": "No selection or promotion from holdout results; both models reported",
+  "approval": false
+}
