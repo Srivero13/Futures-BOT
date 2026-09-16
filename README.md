@@ -1,6 +1,8 @@
-# Futures-BOT 1.6 — research and paper trading
+# Futures-BOT 1.6.1 — research and paper trading
 
 A CPU-based Binance spot research engine with two virtual accounts, Decimal accounting, a calibrated model interface, and a supervised WebSocket coordinator. **No real orders are sent. No profitable strategy has been demonstrated.**
+
+Patch 1.6.1 adds periodic observer/paper console progress, including connection state, elapsed/remaining time, message counts, receipt-fresh quotes, and errors. See [progress options](docs/START_HERE.md#console-progress).
 
 Version 1.6 adds a 27-term nonlinear Ridge research model, a startup doctor, a guarded launcher, progress reporting, content-identified training runs, completed-fit recovery, and atomic artifacts. Existing Decimal accounting and paper risk controls remain in place. Complexity does not guarantee accuracy: the new models remain unapproved.
 
@@ -103,7 +105,7 @@ These historical dates reproduce the release's retrospective window; they are no
 
 This is spot-only, long-only paper research. No futures, funding, margin, real/testnet execution, broker reconciliation, partial fills, queue simulation, or authenticated accounts are implemented. Capital.com and Hapi are not integrated into the new engine. One-minute candles cannot validate subsecond execution. BookTicker lacks an exchange event timestamp, and a receipt-age check cannot establish source freshness. Continuous unattended operation must be validated on each deployment host and connection.
 
-Archived release documentation: [v1.0](docs/V1.0.md) and [v0.2](docs/V0.2.md). Their scope statements apply to those releases. The `engine_v1` package name is retained for command compatibility; its current version is 1.6.0.
+Archived release documentation: [v1.0](docs/V1.0.md) and [v0.2](docs/V0.2.md). Their scope statements apply to those releases. The `engine_v1` package name is retained for command compatibility; its current version is 1.6.1.
 
 ## Project language
 

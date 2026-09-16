@@ -1,4 +1,4 @@
-# Start here: Futures-BOT 1.6
+# Start here: Futures-BOT 1.6.1
 
 This guide installs a CPU-based research environment, checks it, observes public prices, and trains a model. No API keys or funded exchange accounts are needed. The included engine sends no real orders. A successful training run is not approval to trade.
 
@@ -106,3 +106,18 @@ No research model is copied to the active `models/` directory or approved automa
 | Failed/interrupted training | Read `status.json`, fix the cause, and rerun the same command |
 
 No software can guarantee zero crashes from hardware instability, power loss, full disks, operating-system termination, or external outages. This release tests specific failure paths and reports failures clearly; it does not certify unattended operation or profitable trading.
+
+## Console progress
+
+Starting with 1.6.1, the observer and paper coordinator print a progress line approximately every five seconds and immediately on connection transitions and shutdown. Lines include elapsed/remaining time (or continuous mode), cumulative messages, average messages per second, receipt-fresh quote count, the minimum closed-candle warmup across configured symbols, reconnects, error count, and clock status. A connected socket alone does not prove fresh market data; check the quote/message fields.
+
+```bash
+python start_bot.py --seconds 1800 --progress-seconds 5
+python start_bot.py --seconds 1800 --progress-seconds 0
+```
+
+Zero disables console progress. Other values must be finite and at least one second. Network calls can delay a line by their existing timeout; progress is not a separate thread or a wall-clock scheduling guarantee. The message rate is an average since startup, not trading throughput or order latency. Receipt freshness cannot establish source timestamp freshness.
+
+Progress is flushed to stderr; the final JSON and existing paper trade events remain on stdout. Broken/closed progress output disables the reporter without causing a feed reconnect. Health JSON remains available and now includes `connection_state`.
+
+To update, let any existing observation or training session finish first, then run `git pull --ff-only origin develop` from the checkout. Publishing to GitHub does not update another computer or change its running process. Progress appears on the next launch; current model artifacts, training code, and datasets are unaffected by this patch.
