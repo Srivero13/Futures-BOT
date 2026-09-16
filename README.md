@@ -127,3 +127,7 @@ approves a model or sends orders.
 If a model produces zero trades, use the [forecast diagnostics](docs/FORECAST_DIAGNOSTICS.md)
 to distinguish raw forecasts below costs from candidates blocked by the calibration
 buffer. Diagnostics preserve the existing model and entry assumptions.
+
+Use [walk-forward research](docs/WALK_FORWARD.md) to refit fixed model settings
+across chronological monthly folds and evaluate forecast ranking using
+calibration-defined buckets. Results remain retrospective and unapproved.
