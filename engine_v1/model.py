@@ -87,7 +87,7 @@ class RidgeModel:
         if not len(model.mean)==len(model.scale)==len(model.coef)==len(expected):raise ValueError('Invalid model dimension')
         if not all(math.isfinite(v) for v in model.mean+model.scale+model.coef+[model.intercept,model.downside_buffer_bps]):raise ValueError('Non-finite model')
         if type(model.approved) is not bool or type(model.volatility_scaled) is not bool or not math.isfinite(model.volatility_floor) or model.volatility_floor<=0 or model.downside_buffer_bps<0 or not 0<=model.train_end_ms<=model.calibration_end_ms:raise ValueError('Invalid model metadata')
-        if min(model.scale)<=0 or model.horizon_bars not in (1,3,5) or model.timeframe_ms!=60000:raise ValueError('Invalid model schema')
+        if min(model.scale)<=0 or model.horizon_bars not in (1,3,5,15,60) or model.timeframe_ms!=60000:raise ValueError('Invalid model schema')
         if not math.isfinite(model.alpha) or model.alpha<=0:raise ValueError('Invalid regularization')
         if any(type(v) is not int or v<0 for v in (model.fit_rows,model.calibration_rows,model.train_end_ms,model.calibration_end_ms)):raise ValueError('Invalid sample metadata')
         if any(not math.isfinite(v) or v<0 for v in (model.calibration_rmse_bps,model.zero_forecast_rmse_bps)):raise ValueError('Invalid error metadata')
@@ -97,7 +97,7 @@ class RidgeModel:
 def fit_model(rows,x,symbol,horizon,fit_end,calibration_end,alpha=10,volatility_scaled=False):
     # Feature at closed bar i; target from next open to open horizon bars later.
     # Purge labels crossing either segment boundary.
-    if horizon not in (1,3,5) or alpha<=0:raise ValueError('Invalid model parameters')
+    if horizon not in (1,3,5,15,60) or alpha<=0:raise ValueError('Invalid model parameters')
     def examples(start,end,stride=1):
         ids=np.arange(max(20,start),end-horizon-1,stride)
         y=np.array([math.log(float(rows[i+1+horizon]['open'])/float(rows[i+1]['open']))*10000 for i in ids])

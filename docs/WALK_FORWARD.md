@@ -95,3 +95,73 @@ Possible next decisions must follow the results: consistent descriptive ranking
 may justify a separately specified execution experiment; weak/inconsistent ranking
 suggests revisiting features or targets. Neither outcome automatically promotes
 a model. GPU installation does not alter this implementation's calculations.
+
+## Longer horizons and fixed baselines
+
+Research supports horizons of 1, 3, 5, 15, and 60 one-minute bars. The longer
+horizons are available in training, model loading, diagnostics, walk-forward
+ranking, and the offline execution backtest. Existing artifacts remain readable.
+Training implementation hashes change with this update, so new training runs
+receive new identities; historical artifacts are not rewritten.
+
+Each fold now evaluates three fixed forecast baselines on exactly the same
+model-accepted timestamps:
+
+| Baseline | Predicted log return in basis points |
+|---|---|
+| Momentum | Previous 20-minute log return × 10,000 × horizon / 20 |
+| Mean reversion | Negative of that momentum forecast |
+| Zero | 0 |
+
+The momentum rule assumes a constant recent trend rate; it is a deliberately
+simple comparator, not a fitted or calibrated strategy. Reversal assumes the
+opposite sign. Each nonconstant baseline has its own calibration-defined buckets.
+RMSE and ranking are compared on identical rows, so model OOD rejection cannot
+silently give a baseline a different evaluation sample. This is a conditional
+comparison, not standalone baseline performance on every market observation.
+No baseline bucket statistics include costs or simulated fills.
+
+Summary fields include model-versus-baseline RMSE fold counts, each baseline's
+mean defined Spearman correlation, and the model's top-bucket count and gross
+mean return by month. The zero baseline has undefined rank correlation. Better
+ranking or RMSE is not an economic promotion criterion.
+
+## Declare development and reserved dates
+
+Use `--reserve-from YYYY-MM-DD` to prohibit any development fold from extending
+past that boundary. The runner records dates, model settings, baseline definitions,
+source checksums, and runner hash in an adjacent `.protocol.json` **before fitting**.
+A rerun with a different saved protocol fails; use a new output name for an
+explicitly different experiment. Completed aggregate reports are still protected.
+The protocol file persists if training fails or is interrupted.
+
+For the next development experiment, keep the existing March–August schedule,
+linear model, alpha 10, and compare the two declared horizons, 15 and 60 minutes.
+Reserve September 1 onward from these development runs:
+
+```bash
+for horizon in 15 60; do
+  python walkforward_v16.py \
+    --files data/market-expanded/binance-ETHUSDT-*.csv \
+    --symbol ETHUSDT \
+    --first-test 2026-03-01 \
+    --months 6 \
+    --model linear \
+    --horizon "$horizon" \
+    --alpha 10 \
+    --reserve-from 2026-09-01 \
+    --work-dir data/walkforward-long-models \
+    --output "data/eth-linear-h${horizon}-development.json" || break
+done
+```
+
+This evaluates a finite, predefined comparison; it is not an adaptive parameter
+search. Results for March–August are development evidence. The date guard only
+applies to this runner with the supplied flag; it cannot certify that a period
+was unseen elsewhere or prevent all other tools from reading it. No reserved
+period is automatically evaluated. Wait for complete reserved data, record a
+fixed hypothesis and acceptance criteria before accessing its outcomes, and
+interpret the result as validation only if the period actually stayed unexamined.
+Longer horizons yield fewer non-overlapping examples per month, so apparent
+improvements require care. No new profitability, accuracy, or GPU-speed claim
+is made by adding these horizons.

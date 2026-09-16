@@ -43,7 +43,7 @@ def examples(paths, horizon=3, chunk_size=8192):
     Memory is proportional to chunk_size, not file size. Retain only enough
     overlap for 20-bar features and next-open labels; gaps reset the window.
     """
-    if horizon not in (1, 3, 5) or not 32 <= chunk_size <= 1000000:
+    if horizon not in (1, 3, 5, 15, 60) or not 32 <= chunk_size <= 1000000:
         raise ValueError('Invalid horizon or chunk size')
     overlap = 20 + horizon + 1
     buffer = []

@@ -56,7 +56,7 @@ def correlation(a,b):
     return float(np.dot(a,b)/denominator) if denominator else None
 
 
-def collect(factory, model, start, end):
+def collect(factory, model, start, end, include_baselines=False):
     predictor = model if isinstance(model,PolynomialModel) else FastPredictor(model)
     blocks = []
     accepted = total = 0
@@ -69,8 +69,12 @@ def collect(factory, model, start, end):
         accepted += int(np.sum(valid))
         if accepted > MAX_RANK_ROWS:
             raise ValueError('Ranking row cap exceeded; shorten evaluation interval')
-        blocks.append(np.column_stack((p[valid],batch[valid,8])))
-    result = np.concatenate(blocks) if blocks else np.empty((0,2))
+        columns = [p[valid],batch[valid,8]]
+        if include_baselines:
+            momentum = batch[valid,4]*10000*model.horizon_bars/20
+            columns.extend([momentum,-momentum,np.zeros(len(momentum))])
+        blocks.append(np.column_stack(columns))
+    result = np.concatenate(blocks) if blocks else np.empty((0,5 if include_baselines else 2))
     return result, {'grid_examples':total,'accepted':accepted,'ood_rejected':total-accepted}
 
 
@@ -104,8 +108,12 @@ def ranking(calibration, test):
             'note':'Descriptive ranking on a fixed non-overlapping UTC grid; serial dependence can remain. No significance claim or P&L.'}
 
 
-def run(paths, symbol, first_test, months, work_dir, output, model_kind='linear', horizon=3, alpha=10.):
+def run(paths, symbol, first_test, months, work_dir, output, model_kind='linear', horizon=3, alpha=10., reserve_from=None):
     schedule = folds(first_test,months)
+    if reserve_from is not None:
+        reserve_ms = timestamp(reserve_from)
+        if timestamp(schedule[-1]['test_end']) > reserve_ms:
+            raise ValueError('Development folds would enter the reserved period')
     output = Path(output)
     if output.exists():
         raise ValueError('Output exists; choose a new filename')
@@ -113,6 +121,18 @@ def run(paths, symbol, first_test, months, work_dir, output, model_kind='linear'
     if not paths or len(set(paths)) != len(paths):
         raise ValueError('Supply unique chronological shards')
     sources = [{'file':str(p),'sha256':sha256(p)} for p in paths]
+    protocol = {'symbol':symbol,'model_kind':model_kind,'horizon':horizon,'alpha':alpha,
+                'schedule':schedule,'reserve_from':reserve_from,'sources':sources,
+                'baseline_definitions':{'momentum':'20-minute log return * horizon / 20',
+                    'mean_reversion':'negative momentum forecast','zero':'zero log return'},
+                'status':'development; reservation is a boundary guard, not proof of unseen data',
+                'runner_sha256':sha256(Path(__file__))}
+    protocol_path = output.with_suffix('.protocol.json')
+    if protocol_path.exists():
+        if json.loads(protocol_path.read_text()) != protocol:
+            raise ValueError('Protocol differs from saved plan; use a new output path')
+    else:
+        atomic_json(protocol_path,protocol)
     results = []
     print('[walk-forward] fixed schedule: '+json.dumps(schedule),flush=True)
     for index,fold in enumerate(schedule,1):
@@ -124,12 +144,15 @@ def run(paths, symbol, first_test, months, work_dir, output, model_kind='linear'
             model_kind=model_kind,horizon=horizon,alpha=alpha)
         model = load_model(directory/'model.json')
         factory = lambda:examples(paths,horizon=horizon)
-        calibration,cal_counts = collect(factory,model,timestamp(fold['train_end']),timestamp(fold['calibration_end']))
-        test,test_counts = collect(factory,model,timestamp(fold['calibration_end']),timestamp(fold['test_end']))
+        calibration,cal_counts = collect(factory,model,timestamp(fold['train_end']),timestamp(fold['calibration_end']),include_baselines=True)
+        test,test_counts = collect(factory,model,timestamp(fold['calibration_end']),timestamp(fold['test_end']),include_baselines=True)
+        baseline_rankings = {name:ranking(calibration[:,[col,1]],test[:,[col,1]])
+                             for name,col in [('momentum',2),('mean_reversion',3),('zero',4)]}
         result = {'fold':index,**fold,'model_directory':str(directory),
                   'model_sha256':sha256(directory/'model.json'),
                   'calibration_counts':cal_counts,'test_counts':test_counts,
-                  'ranking':ranking(calibration,test),
+                  'ranking':ranking(calibration[:,:2],test[:,:2]),
+                  'baselines_same_model_accepted_rows':baseline_rankings,
                   'overlapping_forecast_diagnostics':training['holdout']}
         results.append(result)
         print('[walk-forward] ranking: '+json.dumps({k:v for k,v in result['ranking'].items() if k not in ('buckets','note')}),flush=True)
@@ -140,6 +163,7 @@ def run(paths, symbol, first_test, months, work_dir, output, model_kind='linear'
                if r['ranking']['top_minus_bottom_actual_log_bps'] is not None]
     report = {'approved':False,'pnl':None,'symbol':symbol,'venue':'binance',
         'model_kind':model_kind,'horizon':horizon,'alpha':alpha,'folds':results,'sources':sources,
+        'protocol':protocol,
         'code_sha256':{str(p):sha256(p) for p in [Path(__file__),Path(__file__).parent/'train_v16.py',
               *[Path(__file__).parent/'engine_v1'/f for f in ('dataset.py','training.py','model.py','nonlinear.py','fast.py')]]},
         'summary':{'folds':len(results),'defined_spearman_folds':len(rhos),
@@ -155,6 +179,23 @@ def run(paths, symbol, first_test, months, work_dir, output, model_kind='linear'
           'Training holdout diagnostics use overlapping labels and their existing cost screen; ranking uses a different subset.',
           'Gaps reset features and may reduce coverage; counts are reported but uninterrupted data is not certified.',
           'No automatic parameter search, best-model selection, retraining loop or approval.']}
+    report['summary']['model_top_bucket_by_fold'] = [
+        {'test_start':r['calibration_end'],
+         'count':r['ranking']['buckets'][-1]['count'],
+         'mean_actual_log_bps_before_costs':r['ranking']['buckets'][-1]['mean_actual_log_bps']}
+        for r in results]
+    report['summary']['model_lower_rmse_folds_vs_baseline'] = {name:sum(
+        r['ranking']['rmse_log_bps'] < r['baselines_same_model_accepted_rows'][name]['rmse_log_bps']
+        for r in results) for name in ('momentum','mean_reversion','zero')}
+    report['summary']['baseline_mean_fold_spearman'] = {}
+    for name in ('momentum','mean_reversion','zero'):
+        values = [r['baselines_same_model_accepted_rows'][name]['spearman'] for r in results]
+        values = [v for v in values if v is not None]
+        report['summary']['baseline_mean_fold_spearman'][name] = float(np.mean(values)) if values else None
+    report['limitations'].extend([
+        'Baselines use the exact model-accepted UTC-grid rows; they are not full-coverage standalone strategies.',
+        'Momentum extrapolates the prior 20-minute log return linearly to the target horizon; mean reversion negates it. No fitting or tuning.',
+        'A saved reservation only prevents this development runner from crossing its date; it does not prove the period was never examined elsewhere.'])
     atomic_json(output,report)
     return report
 
@@ -166,14 +207,15 @@ def main():
     parser.add_argument('--first-test',required=True)
     parser.add_argument('--months',type=int,default=6)
     parser.add_argument('--model',choices=['linear','polynomial'],default='linear')
-    parser.add_argument('--horizon',type=int,choices=[1,3,5],default=3)
+    parser.add_argument('--horizon',type=int,choices=[1,3,5,15,60],default=3)
     parser.add_argument('--alpha',type=float,default=10.)
     parser.add_argument('--work-dir',type=Path,default=Path('data/walkforward-models'))
     parser.add_argument('--output',type=Path,required=True)
+    parser.add_argument('--reserve-from',help='Exclude this date and later from development folds; recorded before fitting')
     args = parser.parse_args()
     try:
         report = run(args.files,args.symbol,args.first_test,args.months,args.work_dir,args.output,
-                     args.model,args.horizon,args.alpha)
+                     args.model,args.horizon,args.alpha,args.reserve_from)
         print(json.dumps(report['summary'],indent=2))
         print(f'Completed: {args.output}; research-only, unapproved.')
         return 0

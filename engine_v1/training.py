@@ -26,7 +26,7 @@ class Reservoir:
 
 
 def fit_stream(factory, symbol, horizon, train_end, calibration_end, alpha=10, model_kind="linear", progress=None):
-    if horizon not in (1, 3, 5) or not math.isfinite(alpha) or alpha <= 0 or not 0 < train_end < calibration_end:
+    if horizon not in (1, 3, 5, 15, 60) or not math.isfinite(alpha) or alpha <= 0 or not 0 < train_end < calibration_end:
         raise ValueError('Invalid fit parameters')
     from .nonlinear import expand, PolynomialModel
     if model_kind not in ('linear', 'polynomial'):

@@ -49,7 +49,7 @@ def simulate(rows, model, start, end, costs=Costs(), progress=None):
     costs.validate()
     if start < model.calibration_end_ms or start >= end or start % MINUTE or end % MINUTE:
         raise ValueError('Require minute-aligned interval after model calibration')
-    if model.timeframe_ms != MINUTE or model.horizon_bars not in (1, 3, 5):
+    if model.timeframe_ms != MINUTE or model.horizon_bars not in (1, 3, 5, 15, 60):
         raise ValueError('Unsupported model timeframe/horizon')
     with localcontext() as context:
         context.prec = 50

@@ -25,7 +25,7 @@ def run_training(paths, venue, symbol, output, train_end, calibration_end, test_
     from engine_v1.training import fit_stream, evaluate_stream
     if not all(re.fullmatch(r'[A-Za-z0-9_-]{1,32}', v) for v in (venue, symbol)):
         raise ValueError('Use letters, digits, underscores or hyphens for venue/symbol')
-    if model_kind not in ('linear', 'polynomial') or horizon not in (1, 3, 5):
+    if model_kind not in ('linear', 'polynomial') or horizon not in (1, 3, 5, 15, 60):
         raise ValueError('Unsupported model or horizon')
     if not 32 <= chunk_size <= 65536 or not math.isfinite(alpha) or alpha <= 0:
         raise ValueError('Use chunk size 32..65536 and positive finite alpha')
@@ -148,7 +148,7 @@ def main():
     parser.add_argument('--calibration-end', required=True)
     parser.add_argument('--test-end', required=True)
     parser.add_argument('--model', choices=['linear', 'polynomial'], default='polynomial')
-    parser.add_argument('--horizon', type=int, choices=[1,3,5], default=3)
+    parser.add_argument('--horizon', type=int, choices=[1,3,5,15,60], default=3)
     parser.add_argument('--alpha', type=float, default=10.)
     parser.add_argument('--chunk-size', type=int, default=4096)
     parser.add_argument('--output', type=Path, default=Path('data/research-v16'))

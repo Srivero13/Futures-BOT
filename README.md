@@ -131,3 +131,8 @@ buffer. Diagnostics preserve the existing model and entry assumptions.
 Use [walk-forward research](docs/WALK_FORWARD.md) to refit fixed model settings
 across chronological monthly folds and evaluate forecast ranking using
 calibration-defined buckets. Results remain retrospective and unapproved.
+
+Walk-forward research also supports **15- and 60-minute horizons**, fixed momentum,
+mean-reversion and zero-return forecast baselines, and `--reserve-from` to keep
+specified dates outside development folds. See the [declared experiment and
+reservation rules](docs/WALK_FORWARD.md#declare-development-and-reserved-dates).
