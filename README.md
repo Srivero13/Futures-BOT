@@ -144,3 +144,7 @@ associations. It preserves all source data and excludes reserved dates.
 The [fixed normalized-decline experiment](docs/REVERSAL_EXPERIMENT.md) tests one
 calibration-defined reversal rule through the existing offline execution simulator,
 with unchanged cost assumptions and no model approval or live orders.
+
+Use [execution attribution](docs/EXECUTION_ATTRIBUTION.md) to reconcile saved
+reversal trades with source candle opens and separate pre-entry movement,
+holding-period gross P&L, and charged execution costs.
