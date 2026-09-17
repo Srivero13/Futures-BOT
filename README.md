@@ -148,3 +148,8 @@ with unchanged cost assumptions and no model approval or live orders.
 Use [execution attribution](docs/EXECUTION_ATTRIBUTION.md) to reconcile saved
 reversal trades with source candle opens and separate pre-entry movement,
 holding-period gross P&L, and charged execution costs.
+
+The [trade-flow data pilot](docs/TRADE_FLOW_DATA.md) downloads verified daily
+Binance spot aggregate trades and produces closed-minute aggressive buy/sell flow
+summaries with storage limits. It adds a data source, not an approved strategy
+or historical order-book reconstruction.
