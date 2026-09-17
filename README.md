@@ -140,3 +140,7 @@ reservation rules](docs/WALK_FORWARD.md#declare-development-and-reserved-dates).
 Before changing features, run the [development data and feature audit](docs/DATA_FEATURE_AUDIT.md)
 to inspect gaps, unusual price/volume observations, and monthly univariate feature
 associations. It preserves all source data and excludes reserved dates.
+
+The [fixed normalized-decline experiment](docs/REVERSAL_EXPERIMENT.md) tests one
+calibration-defined reversal rule through the existing offline execution simulator,
+with unchanged cost assumptions and no model approval or live orders.
