@@ -153,3 +153,7 @@ The [trade-flow data pilot](docs/TRADE_FLOW_DATA.md) downloads verified daily
 Binance spot aggregate trades and produces closed-minute aggressive buy/sell flow
 summaries with storage limits. It adds a data source, not an approved strategy
 or historical order-book reconstruction.
+
+After acquisition, run the [trade-flow alignment audit](docs/TRADE_FLOW_ALIGNMENT.md)
+to compare minute availability, first/last prices and summed volume with verified
+candles before building new features.
