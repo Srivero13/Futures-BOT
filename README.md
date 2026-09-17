@@ -123,3 +123,24 @@ Use the offline [one-minute execution backtest](docs/EXECUTION_BACKTEST.md) to
 measure simulated net P&L, costs, drawdown, and non-overlapping trades from an
 existing model. It includes explicit whole-bar delay assumptions and never
 approves a model or sends orders.
+
+If a model produces zero trades, use the [forecast diagnostics](docs/FORECAST_DIAGNOSTICS.md)
+to distinguish raw forecasts below costs from candidates blocked by the calibration
+buffer. Diagnostics preserve the existing model and entry assumptions.
+
+Use [walk-forward research](docs/WALK_FORWARD.md) to refit fixed model settings
+across chronological monthly folds and evaluate forecast ranking using
+calibration-defined buckets. Results remain retrospective and unapproved.
+
+Walk-forward research also supports **15- and 60-minute horizons**, fixed momentum,
+mean-reversion and zero-return forecast baselines, and `--reserve-from` to keep
+specified dates outside development folds. See the [declared experiment and
+reservation rules](docs/WALK_FORWARD.md#declare-development-and-reserved-dates).
+
+Before changing features, run the [development data and feature audit](docs/DATA_FEATURE_AUDIT.md)
+to inspect gaps, unusual price/volume observations, and monthly univariate feature
+associations. It preserves all source data and excludes reserved dates.
+
+The [fixed normalized-decline experiment](docs/REVERSAL_EXPERIMENT.md) tests one
+calibration-defined reversal rule through the existing offline execution simulator,
+with unchanged cost assumptions and no model approval or live orders.

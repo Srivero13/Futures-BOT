@@ -68,7 +68,7 @@ python train_v16.py --venue binance --symbol BTCUSDT \
 
 This expands the six causal inputs into 27 terms: the original features, their squares, and pairwise interactions. Training-only scaling, Ridge regularization, streaming QR, a separate error-calibration interval, and out-of-distribution rejection are retained. It models nonlinear relationships without a deep-learning framework. More flexibility also creates overfitting risk; the release comparison did not establish an edge.
 
-Progress shows data validation, moments, QR, calibration, and evaluation. Initial file hashing can take time on large inputs before progress starts. The default chunk size is 4,096; reduce it toward 512 if memory is constrained. Supported horizons are 1, 3, and 5 minutes. Keep chosen parameters fixed before evaluating a reserved test interval.
+Progress shows data validation, moments, QR, calibration, and evaluation. Initial file hashing can take time on large inputs before progress starts. The default chunk size is 4,096; reduce it toward 512 if memory is constrained. Supported research horizons are 1, 3, 5, 15, and 60 minutes. Keep chosen parameters fixed before evaluating a reserved test interval.
 
 Run the same command with `--model linear` for the simpler baseline. The outputs occupy distinct run directories. Repeat acquisition/training with ETHUSDT for a separate Ethereum model. The trainer does not use Numba, so installing `requirements-fast.txt` is not necessary for these commands.
 

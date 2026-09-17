@@ -45,18 +45,18 @@ class Costs:
             raise ValueError('Invalid quantity step')
 
 
-def simulate(rows, model, start, end, costs=Costs(), progress=None):
+def simulate(rows, model, start, end, costs=Costs(), progress=None, entry_rule=None):
     costs.validate()
     if start < model.calibration_end_ms or start >= end or start % MINUTE or end % MINUTE:
         raise ValueError('Require minute-aligned interval after model calibration')
-    if model.timeframe_ms != MINUTE or model.horizon_bars not in (1, 3, 5):
+    if model.timeframe_ms != MINUTE or model.horizon_bars not in (1, 3, 5, 15, 60):
         raise ValueError('Unsupported model timeframe/horizon')
     with localcontext() as context:
         context.prec = 50
-        return _simulate(rows, model, start, end, costs, progress)
+        return _simulate(rows, model, start, end, costs, progress, entry_rule)
 
 
-def _simulate(rows, model, start, end, c, progress):
+def _simulate(rows, model, start, end, c, progress, entry_rule=None):
     cash = D(c.capital)
     peak = cash
     max_drawdown = D(0)
@@ -120,10 +120,16 @@ def _simulate(rows, model, start, end, c, progress):
         if position is None and pending is None and len(history) == 21:
             signals += 1
             x = feature_matrix(list(history))[-1]
-            prediction = model.predict(x)
-            if prediction is None:
-                rejected += 1
-            elif prediction-model.downside_buffer_bps*model.target_scale(x) > threshold:
+            if entry_rule is None:
+                prediction = model.predict(x)
+                if prediction is None:
+                    rejected += 1
+                enter = prediction is not None and prediction-model.downside_buffer_bps*model.target_scale(x) > threshold
+            else:
+                enter = entry_rule(x, ts)
+                if type(enter) is not bool:
+                    raise ValueError('Research entry rule must return a boolean')
+            if enter:
                 candidates += 1
                 entry_ms = ts+c.delay_bars*MINUTE
                 exit_ms = entry_ms+model.horizon_bars*MINUTE
