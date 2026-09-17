@@ -136,3 +136,7 @@ Walk-forward research also supports **15- and 60-minute horizons**, fixed moment
 mean-reversion and zero-return forecast baselines, and `--reserve-from` to keep
 specified dates outside development folds. See the [declared experiment and
 reservation rules](docs/WALK_FORWARD.md#declare-development-and-reserved-dates).
+
+Before changing features, run the [development data and feature audit](docs/DATA_FEATURE_AUDIT.md)
+to inspect gaps, unusual price/volume observations, and monthly univariate feature
+associations. It preserves all source data and excludes reserved dates.
