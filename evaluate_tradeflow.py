@@ -45,6 +45,7 @@ def fit_predict(train_x, train_y, targets, alpha=10.):
 
 
 def run(a):
+    backend=getattr(a,'backend','ridge')
     output=Path(a.output)
     if output.exists():raise ValueError('Output exists; choose a new name')
     boundaries=[timestamp(shift_month(a.start,i)) for i in range(4)]
@@ -73,11 +74,16 @@ def run(a):
             if sha256(Path(name))!=digest:raise ValueError('Audited input changed: '+name)
     print('[flow-research] verifying audited inputs',flush=True);verify()
     protocol={'symbol':a.symbol,'start':a.start,'reserve_from':a.reserve_from,'horizon_minutes':15,
+        'backend':backend,'neural_protocol':{'epochs':40,'seed':1729,'hidden':[32,16],'batch_size':256,'lr':.001,'weight_decay':.01},
         'alpha':10,'train_end_ms':boundaries[1],'calibration_end_ms':boundaries[2],'test_end_ms':boundaries[3],
         'features':['notional_imbalance_5','notional_imbalance_20','event_activity_5_vs_20'],
         'input_sha256':fingerprints,'code_sha256':{str(p):sha256(p) for p in [Path(__file__),
             Path(__file__).parent/'walkforward_v16.py',Path(__file__).parent/'engine_v1/dataset.py',
-            Path(__file__).parent/'engine_v1/model.py']}}
+            Path(__file__).parent/'engine_v1/model.py',Path(__file__).parent/'engine_v1/research_mlp.py']}}
+    if backend=='cuda-mlp':
+        import torch
+        if not torch.cuda.is_available():raise RuntimeError('CUDA unavailable')
+        protocol['runtime']={'torch':torch.__version__,'cuda':torch.version.cuda,'gpu':torch.cuda.get_device_name(0)}
     plan=output.with_suffix('.protocol.json')
     if plan.exists() and json.loads(plan.read_text())!=protocol:raise ValueError('Saved protocol differs')
     atomic_json(plan,protocol)
@@ -100,7 +106,13 @@ def run(a):
     metrics={}
     for name,width in [('candles_only',6),('candles_plus_flow',9)]:
         print('[flow-research] fitting '+name,flush=True)
-        cp,tp=fit_predict(train[:,:width],train[:,-1],[cal[:,:width],test[:,:width]])
+        if backend=='ridge':
+            predictor=fit_predict
+        elif backend=='polynomial':
+            from engine_v1.research_mlp import polynomial_predict as predictor
+        else:
+            from engine_v1.research_mlp import fit_predict as predictor
+        cp,tp=predictor(train[:,:width],train[:,-1],[cal[:,:width],test[:,:width]])
         metrics[name]=ranking(np.column_stack((cp,cal[:,-1])),np.column_stack((tp,test[:,-1])))
     verify()
     summary={'paired_rows':dict(zip(['train','calibration','test'],map(len,splits))),
@@ -111,7 +123,7 @@ def run(a):
     atomic_json(output,{'approved':False,'pnl':None,'protocol':protocol,'summary':summary,'rankings':metrics,
         'limitations':['One development split; not independent evidence of profitability or significance.',
         'Fixed 15-minute UTC grid, boundary labels purged; serial dependence remains.',
-        'Scaling and ridge fitting use first month only; bucket cuts use second month only.',
+        'Scaling and fitting use first month only; bucket cuts use second month only; neural epochs are fixed, not selected on test data.',
         'Features use closed minutes in event time; live receipt delay and fills are not modeled.',
         'No OOD filtering; both models use identical rows. No cost or execution backtest.',
         'No model exported, selected or approved. September and later remain reserved.']})
@@ -121,12 +133,13 @@ def run(a):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--audits',nargs='+',required=True,type=Path)
+    p.add_argument('--backend',choices=['ridge','polynomial','cuda-mlp'],default='ridge')
     p.add_argument('--symbol',required=True);p.add_argument('--start',required=True)
     p.add_argument('--reserve-from',required=True);p.add_argument('--output',required=True,type=Path)
     a=p.parse_args()
     try:
         print(json.dumps(run(a),indent=2));print(f'Completed: {a.output}; research-only, unapproved.')
-    except (ValueError,OSError,KeyError,TypeError,csv.Error) as error:
+    except (ValueError,OSError,KeyError,TypeError,csv.Error,RuntimeError,ImportError) as error:
         print(f'Flow research stopped: {error}',file=sys.stderr);return 2
     except KeyboardInterrupt:return 130
     return 0

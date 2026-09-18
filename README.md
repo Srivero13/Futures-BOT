@@ -160,3 +160,6 @@ candles before building new features.
 
 For a fixed comparison of candle-only and candle-plus-flow forecasts on verified
 monthly data, see [Paired trade-flow research](docs/TRADE_FLOW_RESEARCH.md).
+
+Optional [parallel CPU/GPU research](docs/PARALLEL_RESEARCH.md) runs fixed
+polynomial and neural experiments with separate logs and no live-model approval.
