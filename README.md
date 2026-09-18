@@ -157,3 +157,6 @@ or historical order-book reconstruction.
 After acquisition, run the [trade-flow alignment audit](docs/TRADE_FLOW_ALIGNMENT.md)
 to compare minute availability, first/last prices and summed volume with verified
 candles before building new features.
+
+For a fixed comparison of candle-only and candle-plus-flow forecasts on verified
+monthly data, see [Paired trade-flow research](docs/TRADE_FLOW_RESEARCH.md).
