@@ -163,3 +163,6 @@ monthly data, see [Paired trade-flow research](docs/TRADE_FLOW_RESEARCH.md).
 
 Optional [parallel CPU/GPU research](docs/PARALLEL_RESEARCH.md) runs fixed
 polynomial and neural experiments with separate logs and no live-model approval.
+
+Inspect completed paired experiments without retraining using
+[saved research diagnostics](docs/SAVED_RESEARCH_DIAGNOSTICS.md).
