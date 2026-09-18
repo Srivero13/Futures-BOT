@@ -166,3 +166,6 @@ polynomial and neural experiments with separate logs and no live-model approval.
 
 Inspect completed paired experiments without retraining using
 [saved research diagnostics](docs/SAVED_RESEARCH_DIAGNOSTICS.md).
+
+[Live research capture](docs/LIVE_CAPTURE.md) records public spot trades, depth
+updates and snapshots with receipt timestamps, sequence checks and storage limits.
