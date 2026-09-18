@@ -36,3 +36,22 @@ forecast error with flow, not positive trading P&L. This single development spli
 has no significance claim, execution simulation, fees, live receipt latency or
 model approval. No deployable model is exported. Do not tune on this result and
 then describe the same period as untouched validation.
+
+## Fixed rolling development batch
+
+Run `research_tradeflow_batch.py --output-dir data/eth-flow-rolling-run1` to
+acquire March–August 2026 ETH spot flow and evaluate May, June, July and August.
+Each test month uses the preceding month for calibration and the month before
+that for training. All folds use the same features, horizon and ridge penalty.
+August is already inspected development data, not a newly untouched holdout.
+
+The batch reuses checksum-verified downloads in `data/tradeflow-pilot`, audits
+all six months, then saves individual paired reports and `summary.json` in the
+new output directory. It fails on missing candle shards, a failed download or
+a failed audit. The download directory retains its 8 GiB budget. Downloads have
+bounded retries. Runtime depends on the network; the job stops when finished.
+
+Use a new output directory after an interrupted batch. Completed archives remain
+reusable; audits and evaluations are rerun. No live trading or automatic parameter
+search occurs. For terminal persistence, run inside tmux and disable automatic
+suspend in Ubuntu power settings.
