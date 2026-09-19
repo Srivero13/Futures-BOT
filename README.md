@@ -169,3 +169,6 @@ Inspect completed paired experiments without retraining using
 
 [Live research capture](docs/LIVE_CAPTURE.md) records public spot trades, depth
 updates and snapshots with receipt timestamps, sequence checks and storage limits.
+
+[Offline market replay](docs/MARKET_REPLAY.md) verifies recorded-file integrity
+and reconstructs each session within its initial snapshot coverage boundaries.
