@@ -45,3 +45,23 @@ These newly collected September data are explicitly prospective development data
 not an untouched holdout for the earlier experiments. The historical training
 commands retain their September boundary. No profitability claim follows from
 collecting more detailed data.
+
+## Periodic snapshots (format version 2)
+
+The recorder now refreshes the REST snapshot on the existing WebSocket every
+300 seconds by default. Set `--snapshot-seconds` between 30 and 3600. A refresh
+is stored as `snapshot_refresh`, renews the depth sequence anchor, and starts a
+new coverage epoch in replay. It is not counted as a reconnect. Updates already
+covered by the fresh snapshot are marked stale; later updates must bridge its
+sequence. A snapshot older than the last processed depth sequence is rejected.
+Refresh errors follow the existing reconnect/backoff rules.
+
+The timer uses monotonic time. The socket stays open during REST requests, but
+application reads pause and buffered messages receive later read-completion
+timestamps. Periodic refresh reduces exposure to a stale coverage range; it does
+not guarantee complete coverage between refreshes or preserve every intermediate
+book state while fetching. Review replay's coverage fraction and epoch counts.
+
+Use the updated replay command for new recordings. It still accepts older
+single-snapshot recordings. Existing files are not rewritten. A five-minute
+refresh is an initial engineering setting, not an optimized trading interval.

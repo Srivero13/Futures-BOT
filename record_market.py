@@ -62,14 +62,16 @@ def stamps():
     return {'receipt_wall_ns':time.time_ns(),'receipt_monotonic_ns':time.monotonic_ns()}
 
 
-def capture(symbol,seconds,root,max_bytes):
+def capture(symbol,seconds,root,max_bytes,snapshot_seconds=300):
     if not re.fullmatch('[A-Z0-9]{3,20}',symbol):raise ValueError('Invalid symbol')
     if not 1<=seconds<=86400 or not 1024**2<=max_bytes<=32*1024**3:
         raise ValueError('Use 1..86400 seconds and 1 MiB..32 GiB')
+    if not 30<=snapshot_seconds<=3600:raise ValueError('Use 30..3600 seconds between snapshots')
     root=Path(root);root.mkdir(parents=True,exist_ok=False)
     url=f'wss://stream.binance.com:9443/stream?streams={symbol.lower()}@aggTrade/{symbol.lower()}@depth@100ms'
     snapshot_url=f'https://api.binance.com/api/v3/depth?symbol={symbol}&limit=1000'
     atomic_json(root/'protocol.json',{'symbol':symbol,'seconds':seconds,'max_event_bytes':max_bytes,
+        'snapshot_seconds':snapshot_seconds,'format_version':2,
         'streams_url':url,'snapshot_url':snapshot_url,'timestamp_unit':'exchange milliseconds; receipt nanoseconds',
         'approved':False,'purpose':'Prospective development capture; never an untouched September holdout',
         'note':'Receipt means application read completion, not kernel packet arrival. No orders or book reconstruction.'})
@@ -82,18 +84,31 @@ def capture(symbol,seconds,root,max_bytes):
             try:
                 ws=websocket.create_connection(url,timeout=min(5,max(.1,deadline-time.monotonic())))
                 writer.write({'kind':'session_start','session':session,**stamps()})
-                before=stamps()
-                with urlopen(snapshot_url,timeout=min(5,max(.1,deadline-time.monotonic()))) as response:
-                    raw=response.read(2*1024**2+1)
-                after=stamps()
-                if len(raw)>2*1024**2:raise ValueError('Oversized snapshot')
-                snapshot=json.loads(raw)
-                if not isinstance(snapshot.get('bids'),list) or not isinstance(snapshot.get('asks'),list):
-                    raise ValueError('Invalid snapshot')
-                chain=DepthSequence(snapshot['lastUpdateId'])
-                writer.write({'kind':'snapshot','session':session,'request_started':before,**after,'data':snapshot})
-                counts['snapshots']+=1;idle=time.monotonic()
+                def get_snapshot(previous=None):
+                    before=stamps()
+                    with urlopen(snapshot_url,timeout=min(5,max(.1,deadline-time.monotonic()))) as response:
+                        raw=response.read(2*1024**2+1)
+                    after=stamps()
+                    if len(raw)>2*1024**2:raise ValueError('Oversized snapshot')
+                    snapshot=json.loads(raw)
+                    if not isinstance(snapshot.get('bids'),list) or not isinstance(snapshot.get('asks'),list):
+                        raise ValueError('Invalid snapshot')
+                    new_chain=DepthSequence(snapshot['lastUpdateId'])
+                    if previous is not None and new_chain.last<previous.last:
+                        raise ValueError('Refresh snapshot behind current depth sequence')
+                    refresh=previous is not None
+                    writer.write({'kind':'snapshot_refresh' if refresh else 'snapshot','session':session,
+                        'request_started':before,**after,'data':snapshot})
+                    counts['snapshots']+=1
+                    if refresh:counts['snapshot_refreshes']+=1
+                    return new_chain
+                chain=get_snapshot();idle=time.monotonic();refresh_at=idle+snapshot_seconds
                 while time.monotonic()<deadline:
+                    if time.monotonic()>=refresh_at:
+                        chain=get_snapshot(chain)
+                        refresh_at=time.monotonic()+snapshot_seconds
+                        print(f'[record] refreshed snapshot session={session} sequence={chain.last}',flush=True)
+                        if time.monotonic()>=deadline:break
                     ws.settimeout(min(1,max(.01,deadline-time.monotonic())))
                     try:
                         raw=ws.recv();receipt=stamps()
@@ -161,10 +176,11 @@ def capture(symbol,seconds,root,max_bytes):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--symbol',default='ETHUSDT');p.add_argument('--seconds',type=int,default=21600)
+    p.add_argument('--snapshot-seconds',type=int,default=300)
     p.add_argument('--max-gib',type=float,default=4);p.add_argument('--output-dir',type=Path,required=True)
     a=p.parse_args()
     try:
-        result=capture(a.symbol,a.seconds,a.output_dir,int(a.max_gib*1024**3))
+        result=capture(a.symbol,a.seconds,a.output_dir,int(a.max_gib*1024**3),a.snapshot_seconds)
         print(json.dumps(result,indent=2))
         return 0 if result['stop_reason'] in ('duration','byte_budget','disk_reserve','interrupted') else 2
     except (OSError,ValueError,OverflowError) as error:

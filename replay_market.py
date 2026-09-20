@@ -74,6 +74,7 @@ def replay(root,output):
         if path.stat().st_size!=p['bytes'] or sha256(path)!=p['sha256']:raise ValueError('Corrupt part: '+p['file'])
     counts=Counter();book=None;session=None;last_mono=None;last_depth_mono=None
     max_depth_gap=0;last_trade=None;spread_sum=0.;spread_max=0.;spread_min=None
+    epochs=[];epoch=None
     imbalance_sum=0.;lines=0;started=time.monotonic();read_bytes=0
     for part in parts:
         digest=hashlib.sha256()
@@ -93,9 +94,15 @@ def replay(root,output):
                 else:
                     if sid!=session:raise ValueError('Event without its session')
                     data=record['data']
-                    if kind=='snapshot':
-                        if book is not None:raise ValueError('Duplicate session snapshot')
-                        book=Book(data);counts['snapshots']+=1
+                    if kind in ('snapshot','snapshot_refresh'):
+                        if kind=='snapshot' and book is not None:raise ValueError('Duplicate session snapshot')
+                        if kind=='snapshot_refresh':
+                            if book is None:raise ValueError('Refresh without active book')
+                            if int(data['lastUpdateId'])<book.sequence.last:raise ValueError('Refresh sequence regressed')
+                            counts['snapshot_refreshes']+=1
+                        book=Book(data);counts['snapshots']+=1;last_depth_mono=None
+                        epoch={'session':sid,'snapshot_sequence':book.sequence.last,'covered_quotes':0,'uncovered_quotes':0}
+                        epochs.append(epoch)
                     elif kind in ('aggTrade','depthUpdate'):
                         if data['s']!=protocol['symbol'] or data['e']!=kind:raise ValueError('Event identity mismatch')
                         counts['clock_jumps']+=int(record.get('clock_jump',False))
@@ -118,11 +125,12 @@ def replay(root,output):
                             if status=='linked':
                                 if last_depth_mono is not None:max_depth_gap=max(max_depth_gap,(mono-last_depth_mono)/1e6)
                                 last_depth_mono=mono
-                                if quote is None:counts['uncovered_quotes']+=1
+                                if quote is None:
+                                    counts['uncovered_quotes']+=1;epoch['uncovered_quotes']+=1
                                 else:
                                     bid,ask,bq,aq=quote
                                     spread=float((ask-bid)/((ask+bid)/2)*10000)
-                                    counts['covered_quotes']+=1;spread_sum+=spread
+                                    counts['covered_quotes']+=1;epoch['covered_quotes']+=1;spread_sum+=spread
                                     spread_max=max(spread_max,spread);spread_min=spread if spread_min is None else min(spread_min,spread)
                                     imbalance_sum+=float((bq-aq)/(bq+aq))
                     elif kind=='unexpected_event':
@@ -130,12 +138,14 @@ def replay(root,output):
                     else:raise ValueError('Unknown record kind')
                 if lines%50000==0:print(f'[replay] records={lines:,} elapsed={time.monotonic()-started:.1f}s',flush=True)
         if digest.hexdigest()!=part['sha256']:raise ValueError('Part changed during replay')
-    for key in ('snapshots','agg_trades','depth_stale','depth_linked','depth_gap_or_invalid','clock_jumps','aggregate_id_missing','aggregate_id_stale'):
+    for key in ('snapshots','snapshot_refreshes','agg_trades','depth_stale','depth_linked','depth_gap_or_invalid','clock_jumps','aggregate_id_missing','aggregate_id_stale'):
         if counts[key]!=summary['counts'].get(key,0):raise ValueError('Recorder count mismatch: '+key)
     if read_bytes!=summary['event_bytes']:raise ValueError('Replay byte count mismatch')
     if any(sha256(Path(p))!=h for p,h in source_hashes.items()):raise ValueError('Metadata changed during replay')
     n=counts['covered_quotes']
     result={'approved':False,'capture':str(root),'integrity_passed':True,'counts':dict(counts),
+        'snapshot_epochs':epochs,
+        'covered_depth_fraction':n/counts['depth_linked'] if counts['depth_linked'] else None,
         'records':lines,'max_linked_depth_receipt_gap_ms':max_depth_gap,
         'covered_quote_spread_bps':{'mean':spread_sum/n if n else None,'min':spread_min,'max':spread_max if n else None},
         'mean_best_level_quantity_imbalance':imbalance_sum/n if n else None,
@@ -154,7 +164,7 @@ def main():
     a=p.parse_args()
     try:
         report=replay(a.capture,a.output)
-        print(json.dumps({k:v for k,v in report.items() if k not in ('parts','source_metadata_sha256','limitations')},indent=2))
+        print(json.dumps({k:v for k,v in report.items() if k not in ('parts','source_metadata_sha256','limitations','snapshot_epochs')},indent=2))
         print(f'Completed: {a.output}; replay only, unapproved.')
     except (ValueError,OSError,KeyError,TypeError,InvalidOperation) as error:
         print(f'Replay stopped: {error}');return 2

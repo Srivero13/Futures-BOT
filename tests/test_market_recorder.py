@@ -52,3 +52,61 @@ class RecorderTests(unittest.TestCase):
             self.assertEqual(sum(r['kind']=='snapshot' for r in rows),2)
             self.assertTrue(any(r.get('sequence_status')=='gap_or_invalid' for r in rows))
             first.close.assert_called_once();second.close.assert_called_once()
+
+    def test_periodic_refresh_without_disconnect_and_replay_coverage(self):
+        from unittest.mock import patch,MagicMock
+        from record_market import capture
+        from replay_market import replay
+        now=[0.];calls=[0]
+        def event(first,last,bids):
+            return json.dumps({'data':{'e':'depthUpdate','s':'ETHUSDT','U':first,'u':last,'b':bids,'a':[]}})
+        def receive():
+            calls[0]+=1
+            if calls[0]==1:
+                now[0]=31.
+                return event(101,105,[['99','0']])
+            if calls[0]==2:return event(106,199,[])
+            if calls[0]==3:return event(200,201,[['90','3']])
+            raise KeyboardInterrupt()
+        ws=MagicMock();ws.recv.side_effect=receive
+        replies=[]
+        for seq,bid,ask in [(100,'99','101'),(200,'90','92')]:
+            r=MagicMock();r.__enter__.return_value.read.return_value=json.dumps({'lastUpdateId':seq,'bids':[[bid,'1']],'asks':[[ask,'1']]}).encode();replies.append(r)
+        with tempfile.TemporaryDirectory() as d,patch('record_market.websocket.create_connection',return_value=ws) as connect,patch('record_market.urlopen',side_effect=replies),patch('record_market.time.monotonic',side_effect=lambda:now[0]),patch('builtins.print'):
+            root=Path(d)/'capture'
+            recorded=capture('ETHUSDT',60,root,1024**2,snapshot_seconds=30)
+            self.assertEqual(connect.call_count,1)
+            self.assertEqual(recorded['counts']['snapshots'],2)
+            self.assertEqual(recorded['counts']['snapshot_refreshes'],1)
+            self.assertEqual(recorded['counts']['depth_stale'],1)
+            report=replay(root,root/'replay.json')
+            self.assertEqual(report['counts']['covered_quotes'],1)
+            self.assertEqual(report['counts']['uncovered_quotes'],1)
+            self.assertEqual(len(report['snapshot_epochs']),2)
+            self.assertEqual(report['covered_depth_fraction'],.5)
+            self.assertEqual(report['snapshot_epochs'][0]['uncovered_quotes'],1)
+            self.assertEqual(report['snapshot_epochs'][1]['covered_quotes'],1)
+
+    def test_invalid_refresh_period_creates_no_directory(self):
+        from record_market import capture
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)/'invalid'
+            with self.assertRaises(ValueError):capture('ETHUSDT',60,root,1024**2,snapshot_seconds=1)
+            self.assertFalse(root.exists())
+
+    def test_refresh_cannot_move_sequence_backward(self):
+        from unittest.mock import patch,MagicMock
+        from record_market import capture
+        now=[0.]
+        def receive():
+            now[0]=31.
+            return json.dumps({'data':{'e':'depthUpdate','s':'ETHUSDT','U':101,'u':105,'b':[],'a':[]}})
+        ws=MagicMock();ws.recv.side_effect=receive
+        replies=[]
+        for seq in (100,104):
+            response=MagicMock();response.__enter__.return_value.read.return_value=json.dumps({'lastUpdateId':seq,'bids':[['99','1']],'asks':[['101','1']]}).encode();replies.append(response)
+        with tempfile.TemporaryDirectory() as d,patch('record_market.websocket.create_connection',side_effect=[ws,KeyboardInterrupt()]),patch('record_market.urlopen',side_effect=replies),patch('record_market.time.monotonic',side_effect=lambda:now[0]),patch('record_market.time.sleep'),patch('builtins.print'):
+            report=capture('ETHUSDT',60,Path(d)/'capture',1024**2,snapshot_seconds=30)
+            self.assertEqual(report['counts']['snapshots'],1)
+            self.assertEqual(report['counts'].get('snapshot_refreshes',0),0)
+            self.assertEqual(report['errors']['Refresh snapshot behind current depth sequence'],1)

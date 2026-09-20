@@ -32,3 +32,10 @@ Price-level updates follow the official
 [Binance depth-stream procedure](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md#how-to-manage-a-local-order-book-correctly).
 Passing internal checks does not prove exchange authenticity, complete historical
 coverage, executable liquidity, or profitability. No model is trained or approved.
+
+Format-version-2 `snapshot_refresh` records replace the book within the same
+connection session and reset the receipt-gap calculation. Their sequence must
+not regress. Each refresh starts a separate snapshot coverage epoch. Reports
+include `covered_depth_fraction` (event-weighted) and `snapshot_epochs` with
+covered/uncovered counts. Any future training labels must stay inside a valid
+continuous coverage segment and must not cross refresh boundaries.
