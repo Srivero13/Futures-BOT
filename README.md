@@ -175,3 +175,6 @@ and reconstructs each session within its initial snapshot coverage boundaries.
 
 Build [continuous microstructure samples](docs/MICROSTRUCTURE_SAMPLES.md) from
 verified recordings without allowing labels to cross coverage or snapshot gaps.
+
+Fit a [frozen microstructure CPU model](docs/FROZEN_MICROSTRUCTURE_MODEL.md)
+and evaluate it on a separate recording collected after fitting.
