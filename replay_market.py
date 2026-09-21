@@ -57,7 +57,7 @@ class Book:
         return status,self.quote()
 
 
-def replay(root,output):
+def replay(root,output,on_quote=None):
     root=Path(root).resolve();output=Path(output)
     if output.exists():raise ValueError('Output exists; choose another filename')
     summary_path=root/'summary.json';protocol_path=root/'protocol.json'
@@ -83,6 +83,8 @@ def replay(root,output):
                 digest.update(raw);read_bytes+=len(raw);lines+=1
                 if not raw.endswith(b'\n'):raise ValueError('Incomplete final record')
                 record=json.loads(raw);kind=record['kind'];sid=record['session']
+                if on_quote is not None and (kind in ('session_start','session_error','snapshot','snapshot_refresh','unexpected_event') or record.get('clock_jump',False)):
+                    on_quote(record,None)
                 mono=record['receipt_monotonic_ns']
                 if type(mono) is not int or (last_mono is not None and mono<last_mono):raise ValueError('Non-monotonic receipt times')
                 last_mono=mono
@@ -119,10 +121,13 @@ def replay(root,output):
                             try:status,quote=book.update(data)
                             except ValueError as error:
                                 if str(error)!='depth_sequence_gap' or record['sequence_status']!='gap_or_invalid':raise
-                                counts['depth_gap_or_invalid']+=1;book=None;last_depth_mono=None;continue
+                                counts['depth_gap_or_invalid']+=1;book=None;last_depth_mono=None
+                                if on_quote is not None:on_quote(record,None)
+                                continue
                             if status!=record['sequence_status']:raise ValueError('Recorded sequence status mismatch')
                             counts['depth_'+status]+=1
                             if status=='linked':
+                                if on_quote is not None:on_quote(record,quote)
                                 if last_depth_mono is not None:max_depth_gap=max(max_depth_gap,(mono-last_depth_mono)/1e6)
                                 last_depth_mono=mono
                                 if quote is None:

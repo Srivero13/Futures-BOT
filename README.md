@@ -172,3 +172,6 @@ updates and snapshots with receipt timestamps, sequence checks and storage limit
 
 [Offline market replay](docs/MARKET_REPLAY.md) verifies recorded-file integrity
 and reconstructs each session within its initial snapshot coverage boundaries.
+
+Build [continuous microstructure samples](docs/MICROSTRUCTURE_SAMPLES.md) from
+verified recordings without allowing labels to cross coverage or snapshot gaps.
