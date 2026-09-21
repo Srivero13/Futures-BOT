@@ -36,3 +36,20 @@ Keep the model and assumptions fixed when interpreting results. A five-second
 hold after delayed entry differs from the original five-second prediction target.
 Use the findings to assess economic feasibility, not as evidence of live profits.
 The output directory must be new; inputs and existing reports remain unchanged.
+
+## Separate spread from assumed slippage
+
+```bash
+python attribute_micro_costs.py \
+  --report data/forward-20260921T150926Z/execution-costs/report.json \
+  --output data/forward-20260921T150926Z/execution-costs/cost-attribution.json
+```
+
+This reads saved trades, verifies their monetary identities, and separates
+observed bid/ask spread cost from assumed adverse slippage. It reports the
+zero-slippage/zero-fee result and the per-side fee at which that idealized result
+would break even. A negative break-even fee means a subsidy would be needed for
+this closed-trade subset even before slippage. Fixed scenarios at 0, 1, 5 and 10
+bps per side are sensitivity calculations, not a search for a winning strategy.
+Quantities and timestamps are held fixed, so these are not new fill simulations.
+Unresolved positions remain excluded and no complete portfolio P&L is claimed.
