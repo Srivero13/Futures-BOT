@@ -17,6 +17,23 @@ class StorageLimit(Exception):
     pass
 
 
+class NetworkFailure(Exception):
+    def __init__(self, operation, cause):
+        self.operation=operation;self.cause=cause
+        super().__init__(str(cause))
+
+
+def network_call(operation, function, *args, **kwargs):
+    """Only errors from actual network operations enter the retry path."""
+    try:return function(*args, **kwargs)
+    except OSError as error:raise NetworkFailure(operation,error) from error
+
+
+def read_snapshot(url, timeout):
+    with urlopen(url,timeout=timeout) as response:
+        return response.read(2*1024**2+1)
+
+
 class DepthSequence:
     def __init__(self, snapshot_id):
         self.last=int(snapshot_id)
@@ -62,32 +79,32 @@ def stamps():
     return {'receipt_wall_ns':time.time_ns(),'receipt_monotonic_ns':time.monotonic_ns()}
 
 
-def capture(symbol,seconds,root,max_bytes,snapshot_seconds=300):
+def capture(symbol,seconds,root,max_bytes,snapshot_seconds=300,max_consecutive_failures=0):
     if not re.fullmatch('[A-Z0-9]{3,20}',symbol):raise ValueError('Invalid symbol')
     if not 1<=seconds<=86400 or not 1024**2<=max_bytes<=32*1024**3:
         raise ValueError('Use 1..86400 seconds and 1 MiB..32 GiB')
     if not 30<=snapshot_seconds<=3600:raise ValueError('Use 30..3600 seconds between snapshots')
+    if type(max_consecutive_failures) is not int or max_consecutive_failures<0:raise ValueError('Invalid retry limit')
     root=Path(root);root.mkdir(parents=True,exist_ok=False)
     url=f'wss://stream.binance.com:9443/stream?streams={symbol.lower()}@aggTrade/{symbol.lower()}@depth@100ms'
     snapshot_url=f'https://api.binance.com/api/v3/depth?symbol={symbol}&limit=1000'
     atomic_json(root/'protocol.json',{'symbol':symbol,'seconds':seconds,'max_event_bytes':max_bytes,
-        'snapshot_seconds':snapshot_seconds,'format_version':2,
+        'snapshot_seconds':snapshot_seconds,'format_version':2,'max_consecutive_failures':max_consecutive_failures,
         'streams_url':url,'snapshot_url':snapshot_url,'timestamp_unit':'exchange milliseconds; receipt nanoseconds',
         'approved':False,'purpose':'Prospective development capture; never an untouched September holdout',
         'note':'Receipt means application read completion, not kernel packet arrival. No orders or book reconstruction.'})
     writer=Writer(root,max_bytes);counts=Counter();errors=Counter();session=0
     started=time.monotonic();deadline=started+seconds;progress=started;reason='duration';failures=0
-    last_trade=None;previous_clock=None
+    last_trade=None;previous_clock=None;error_details=[]
     try:
         while time.monotonic()<deadline:
             ws=None;session+=1
             try:
-                ws=websocket.create_connection(url,timeout=min(5,max(.1,deadline-time.monotonic())))
+                ws=network_call('connect',websocket.create_connection,url,timeout=min(5,max(.1,deadline-time.monotonic())))
                 writer.write({'kind':'session_start','session':session,**stamps()})
                 def get_snapshot(previous=None):
                     before=stamps()
-                    with urlopen(snapshot_url,timeout=min(5,max(.1,deadline-time.monotonic()))) as response:
-                        raw=response.read(2*1024**2+1)
+                    raw=network_call('snapshot',read_snapshot,snapshot_url,min(5,max(.1,deadline-time.monotonic())))
                     after=stamps()
                     if len(raw)>2*1024**2:raise ValueError('Oversized snapshot')
                     snapshot=json.loads(raw)
@@ -109,9 +126,9 @@ def capture(symbol,seconds,root,max_bytes,snapshot_seconds=300):
                         refresh_at=time.monotonic()+snapshot_seconds
                         print(f'[record] refreshed snapshot session={session} sequence={chain.last}',flush=True)
                         if time.monotonic()>=deadline:break
-                    ws.settimeout(min(1,max(.01,deadline-time.monotonic())))
+                    network_call('settimeout',ws.settimeout,min(1,max(.01,deadline-time.monotonic())))
                     try:
-                        raw=ws.recv();receipt=stamps()
+                        raw=network_call('receive',ws.recv);receipt=stamps()
                     except websocket.WebSocketTimeoutException:
                         if time.monotonic()-idle>30:raise ValueError('feed_idle_30s')
                         continue
@@ -145,24 +162,34 @@ def capture(symbol,seconds,root,max_bytes,snapshot_seconds=300):
                     if time.monotonic()-progress>=10:
                         writer.flush();progress=time.monotonic()
                         print(f'[record] elapsed={progress-started:.0f}/{seconds}s bytes={writer.total} sessions={session} counts={dict(counts)}',flush=True)
-            except (websocket.WebSocketException,URLError,TimeoutError,ConnectionError,ValueError,KeyError) as error:
-                name=str(error) if isinstance(error,ValueError) else type(error).__name__
+            except (NetworkFailure,websocket.WebSocketException,URLError,TimeoutError,ConnectionError,ValueError,KeyError) as error:
+                cause=error.cause if isinstance(error,NetworkFailure) else error
+                name=str(cause) if isinstance(cause,ValueError) else type(cause).__name__
+                detail={'operation':error.operation if isinstance(error,NetworkFailure) else 'feed',
+                    'type':type(cause).__name__,'errno':getattr(cause,'errno',None),'message':str(cause)[:500]}
+                error_details.append(detail);error_details=error_details[-20:]
                 errors[name]+=1;failures+=1
-                writer.write({'kind':'session_error','session':session,**stamps(),'error':name})
+                writer.write({'kind':'session_error','session':session,**stamps(),'error':name,'detail':detail})
                 print(f'[record] session={session} reconnect: {name}',flush=True)
-                if failures>=10:reason='consecutive_failure_limit';break
+                if max_consecutive_failures and failures>=max_consecutive_failures:reason='consecutive_failure_limit';break
             finally:
-                if ws is not None:ws.close(timeout=1)
+                if ws is not None:
+                    try:ws.close(timeout=1)
+                    except (OSError,websocket.WebSocketException) as error:
+                        errors['close_'+type(error).__name__]+=1
+                        error_details.append({'operation':'close','type':type(error).__name__,'errno':getattr(error,'errno',None),'message':str(error)[:500]})
+                        error_details=error_details[-20:]
             remaining=deadline-time.monotonic()
             if remaining>0:time.sleep(min(remaining,2**min(failures,5)))
     except StorageLimit as error:reason=str(error)
     except KeyboardInterrupt:reason='interrupted'
     except OSError as error:
-        reason='storage_or_os_error';errors[type(error).__name__]+=1
+        reason='storage_or_local_os_error';errors[type(error).__name__]+=1
+        error_details.append({'operation':'local_io','type':type(error).__name__,'errno':getattr(error,'errno',None),'message':str(error)[:500]})
     finally:
         writer.close_part()
         summary={'approved':False,'observe_only':True,'stop_reason':reason,'elapsed_seconds':time.monotonic()-started,
-            'sessions':session,'counts':dict(counts),'errors':dict(errors),'event_bytes':writer.total,'parts':writer.parts,
+            'sessions':session,'counts':dict(counts),'errors':dict(errors),'recent_error_details':error_details[-20:],'event_bytes':writer.total,'parts':writer.parts,
             'limitations':['Sequence-linked depth is not a reconstructed or validated executable book.',
             'Snapshots contain at most 1000 levels per side; unchanged deeper levels are unknown.',
             'Snapshot fetching temporarily delays application reads; socket buffering is included in receipt timing.',
@@ -177,10 +204,11 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--symbol',default='ETHUSDT');p.add_argument('--seconds',type=int,default=21600)
     p.add_argument('--snapshot-seconds',type=int,default=300)
+    p.add_argument('--max-consecutive-failures',type=int,default=0,help='0 retries until the capture deadline')
     p.add_argument('--max-gib',type=float,default=4);p.add_argument('--output-dir',type=Path,required=True)
     a=p.parse_args()
     try:
-        result=capture(a.symbol,a.seconds,a.output_dir,int(a.max_gib*1024**3),a.snapshot_seconds)
+        result=capture(a.symbol,a.seconds,a.output_dir,int(a.max_gib*1024**3),a.snapshot_seconds,a.max_consecutive_failures)
         print(json.dumps(result,indent=2))
         return 0 if result['stop_reason'] in ('duration','byte_budget','disk_reserve','interrupted') else 2
     except (OSError,ValueError,OverflowError) as error:

@@ -65,3 +65,23 @@ book state while fetching. Review replay's coverage fraction and epoch counts.
 Use the updated replay command for new recordings. It still accepts older
 single-snapshot recordings. Existing files are not rewritten. A five-minute
 refresh is an initial engineering setting, not an optimized trading interval.
+
+## Internet outages
+
+Socket and snapshot-request `OSError` failures now enter the network retry path;
+local file-write errors remain fatal. Socket close errors are reported without
+aborting cleanup or replacing the original failure. The summary includes the last
+20 error details (operation, exception type, errno and message), so network and
+local I/O failures can be distinguished.
+
+By default, failed connections retry with delays capped at 32 seconds until the
+original wall-duration deadline. Offline time counts toward that deadline; this
+does not promise six hours of usable data. Set `--max-consecutive-failures 10` to
+restore the earlier failure-count cutoff, or leave it at zero for deadline-bound
+retries. Storage limits remain active. Each restored connection obtains a fresh
+snapshot; missing market events are not invented or backfilled.
+
+The old `storage_or_os_error` summary cannot reveal whether its final exception
+was a socket or a disk failure. Existing completed manifests can still be replayed
+and verified. A failed recorder exit prevents an `&&`-chained replay command from
+running; invoke replay separately for that saved directory.

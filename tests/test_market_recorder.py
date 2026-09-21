@@ -110,3 +110,43 @@ class RecorderTests(unittest.TestCase):
             self.assertEqual(report['counts']['snapshots'],1)
             self.assertEqual(report['counts'].get('snapshot_refreshes',0),0)
             self.assertEqual(report['errors']['Refresh snapshot behind current depth sequence'],1)
+
+    def test_network_oserror_recovers_and_close_error_does_not_abort(self):
+        import errno
+        from unittest.mock import patch,MagicMock
+        from record_market import capture
+        ws=MagicMock();ws.recv.side_effect=[json.dumps({'data':{'e':'depthUpdate','s':'ETHUSDT','U':101,'u':102,'b':[],'a':[]}}),KeyboardInterrupt()]
+        ws.close.side_effect=OSError(errno.ENETDOWN,'Network down during close')
+        response=MagicMock();response.__enter__.return_value.read.return_value=json.dumps({'lastUpdateId':100,'bids':[['99','1']],'asks':[['101','1']]}).encode()
+        with tempfile.TemporaryDirectory() as d,patch('record_market.websocket.create_connection',side_effect=[OSError(errno.ENETUNREACH,'Network unreachable'),ws]),patch('record_market.urlopen',return_value=response),patch('record_market.time.sleep'),patch('builtins.print'):
+            report=capture('ETHUSDT',60,Path(d)/'capture',1024**2)
+            self.assertEqual(report['stop_reason'],'interrupted')
+            self.assertEqual(report['counts']['depth_linked'],1)
+            self.assertEqual(report['errors']['OSError'],1)
+            self.assertEqual(report['errors']['close_OSError'],1)
+            self.assertEqual(report['recent_error_details'][0]['operation'],'connect')
+            self.assertEqual(report['recent_error_details'][0]['errno'],errno.ENETUNREACH)
+
+    def test_outage_retries_to_deadline_and_optional_limit(self):
+        from unittest.mock import patch
+        from record_market import capture
+        for limit,expected in [(0,'duration'),(2,'consecutive_failure_limit')]:
+            now=[0.]
+            def sleep(delay):now[0]+=delay
+            with tempfile.TemporaryDirectory() as d,patch('record_market.websocket.create_connection',side_effect=OSError(101,'Network unreachable')) as connect,patch('record_market.time.monotonic',side_effect=lambda:now[0]),patch('record_market.time.sleep',side_effect=sleep),patch('builtins.print'):
+                report=capture('ETHUSDT',600,Path(d)/'capture',1024**2,max_consecutive_failures=limit)
+                self.assertEqual(report['stop_reason'],expected)
+                self.assertLessEqual(len(report['recent_error_details']),20)
+                if limit:self.assertEqual(connect.call_count,2)
+                else:
+                    self.assertGreater(connect.call_count,10)
+                    self.assertEqual(now[0],600)
+
+    def test_disk_error_is_not_retried_as_network(self):
+        from unittest.mock import patch,MagicMock
+        from record_market import capture
+        with tempfile.TemporaryDirectory() as d,patch('record_market.websocket.create_connection',return_value=MagicMock()) as connect,patch('record_market.Writer.write',side_effect=OSError(28,'No space left')):
+            report=capture('ETHUSDT',60,Path(d)/'capture',1024**2)
+            self.assertEqual(report['stop_reason'],'storage_or_local_os_error')
+            self.assertEqual(connect.call_count,1)
+            self.assertEqual(report['recent_error_details'][0]['operation'],'local_io')
