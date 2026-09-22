@@ -180,3 +180,6 @@ Fit a [frozen microstructure CPU model](docs/FROZEN_MICROSTRUCTURE_MODEL.md)
 and evaluate it on a separate recording collected after fitting.
 
 Inspect frozen forecasts with the [delayed-quote execution-cost diagnostic](docs/MICROSTRUCTURE_EXECUTION_COSTS.md).
+
+Build and fit [delayed-entry quote-return models](docs/DELAYED_MICROSTRUCTURE.md)
+with observed spread in the target and a separate frozen forward evaluation.
