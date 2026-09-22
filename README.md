@@ -144,3 +144,39 @@ associations. It preserves all source data and excludes reserved dates.
 The [fixed normalized-decline experiment](docs/REVERSAL_EXPERIMENT.md) tests one
 calibration-defined reversal rule through the existing offline execution simulator,
 with unchanged cost assumptions and no model approval or live orders.
+
+Use [execution attribution](docs/EXECUTION_ATTRIBUTION.md) to reconcile saved
+reversal trades with source candle opens and separate pre-entry movement,
+holding-period gross P&L, and charged execution costs.
+
+The [trade-flow data pilot](docs/TRADE_FLOW_DATA.md) downloads verified daily
+Binance spot aggregate trades and produces closed-minute aggressive buy/sell flow
+summaries with storage limits. It adds a data source, not an approved strategy
+or historical order-book reconstruction.
+
+After acquisition, run the [trade-flow alignment audit](docs/TRADE_FLOW_ALIGNMENT.md)
+to compare minute availability, first/last prices and summed volume with verified
+candles before building new features.
+
+For a fixed comparison of candle-only and candle-plus-flow forecasts on verified
+monthly data, see [Paired trade-flow research](docs/TRADE_FLOW_RESEARCH.md).
+
+Optional [parallel CPU/GPU research](docs/PARALLEL_RESEARCH.md) runs fixed
+polynomial and neural experiments with separate logs and no live-model approval.
+
+Inspect completed paired experiments without retraining using
+[saved research diagnostics](docs/SAVED_RESEARCH_DIAGNOSTICS.md).
+
+[Live research capture](docs/LIVE_CAPTURE.md) records public spot trades, depth
+updates and snapshots with receipt timestamps, sequence checks and storage limits.
+
+[Offline market replay](docs/MARKET_REPLAY.md) verifies recorded-file integrity
+and reconstructs each session within its initial snapshot coverage boundaries.
+
+Build [continuous microstructure samples](docs/MICROSTRUCTURE_SAMPLES.md) from
+verified recordings without allowing labels to cross coverage or snapshot gaps.
+
+Fit a [frozen microstructure CPU model](docs/FROZEN_MICROSTRUCTURE_MODEL.md)
+and evaluate it on a separate recording collected after fitting.
+
+Inspect frozen forecasts with the [delayed-quote execution-cost diagnostic](docs/MICROSTRUCTURE_EXECUTION_COSTS.md).
