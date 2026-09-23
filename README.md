@@ -198,3 +198,6 @@ baseline on identical delayed-label samples from existing recordings.
 
 Compare [receipt-ordered aggressive trade flow](docs/AGGRESSIVE_FLOW.md) with the
 three-feature baseline using existing captures and identical delayed-label rows.
+
+[Freeze all three feature models](docs/FROZEN_FEATURE_PACK.md) once and evaluate
+them without refitting on fresh recordings across days.
