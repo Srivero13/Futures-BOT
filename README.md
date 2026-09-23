@@ -186,3 +186,6 @@ with observed spread in the target and a separate frozen forward evaluation.
 
 Inspect [paired block uncertainty and an imbalance-only baseline](docs/DELAYED_UNCERTAINTY.md)
 from saved delayed-model datasets without changing the frozen model.
+
+Replay [delayed-model execution with fixed cost gates](docs/DELAYED_EXECUTION.md)
+to compare frozen bucket selection with modeled-cost eligibility.
