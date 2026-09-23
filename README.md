@@ -183,3 +183,6 @@ Inspect frozen forecasts with the [delayed-quote execution-cost diagnostic](docs
 
 Build and fit [delayed-entry quote-return models](docs/DELAYED_MICROSTRUCTURE.md)
 with observed spread in the target and a separate frozen forward evaluation.
+
+Inspect [paired block uncertainty and an imbalance-only baseline](docs/DELAYED_UNCERTAINTY.md)
+from saved delayed-model datasets without changing the frozen model.
