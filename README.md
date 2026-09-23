@@ -180,3 +180,18 @@ Fit a [frozen microstructure CPU model](docs/FROZEN_MICROSTRUCTURE_MODEL.md)
 and evaluate it on a separate recording collected after fitting.
 
 Inspect frozen forecasts with the [delayed-quote execution-cost diagnostic](docs/MICROSTRUCTURE_EXECUTION_COSTS.md).
+
+Build and fit [delayed-entry quote-return models](docs/DELAYED_MICROSTRUCTURE.md)
+with observed spread in the target and a separate frozen forward evaluation.
+
+Inspect [paired block uncertainty and an imbalance-only baseline](docs/DELAYED_UNCERTAINTY.md)
+from saved delayed-model datasets without changing the frozen model.
+
+Replay [delayed-model execution with fixed cost gates](docs/DELAYED_EXECUTION.md)
+to compare frozen bucket selection with modeled-cost eligibility.
+
+Study [fixed paired holding periods](docs/HORIZON_PROFILE.md) at 5, 15, 30 and
+60 seconds using unchanged frozen signals and the same completed entry samples.
+
+Compare [causal best-quote dynamics](docs/QUOTE_DYNAMICS.md) against the three-feature
+baseline on identical delayed-label samples from existing recordings.
