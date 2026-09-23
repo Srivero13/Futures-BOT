@@ -192,3 +192,6 @@ to compare frozen bucket selection with modeled-cost eligibility.
 
 Study [fixed paired holding periods](docs/HORIZON_PROFILE.md) at 5, 15, 30 and
 60 seconds using unchanged frozen signals and the same completed entry samples.
+
+Compare [causal best-quote dynamics](docs/QUOTE_DYNAMICS.md) against the three-feature
+baseline on identical delayed-label samples from existing recordings.
