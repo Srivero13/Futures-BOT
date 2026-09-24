@@ -204,3 +204,6 @@ them without refitting on fresh recordings across days.
 
 [Consolidate frozen evaluations and document actual account fees](docs/PACK_SUMMARY_AND_FEES.md)
 without modifying the frozen comparison pack.
+
+Optionally [query Spot commission rates locally with read-only credentials](docs/READ_ONLY_SPOT_FEES.md).
+The helper sends no orders and saves no credentials.
