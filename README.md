@@ -201,3 +201,6 @@ three-feature baseline using existing captures and identical delayed-label rows.
 
 [Freeze all three feature models](docs/FROZEN_FEATURE_PACK.md) once and evaluate
 them without refitting on fresh recordings across days.
+
+[Consolidate frozen evaluations and document actual account fees](docs/PACK_SUMMARY_AND_FEES.md)
+without modifying the frozen comparison pack.
