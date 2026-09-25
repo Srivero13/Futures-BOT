@@ -215,3 +215,6 @@ Test a separate [fixed hourly trend hypothesis](docs/HOURLY_TREND.md) on develop
 data with delayed fills and costs, preserving the frozen microstructure models.
 Its saved-trade robustness diagnostic checks best-trade concentration and adverse
 slippage sensitivity without retuning the strategy.
+
+Compare [ETH-only forecasts against fixed BTC-context features](docs/CROSS_ASSET.md)
+on identical delayed hourly targets, keeping the reserved period excluded.
