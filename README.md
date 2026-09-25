@@ -207,3 +207,6 @@ without modifying the frozen comparison pack.
 
 Optionally [query Spot commission rates locally with read-only credentials](docs/READ_ONLY_SPOT_FEES.md).
 The helper sends no orders and saves no credentials.
+
+[Measure the frozen models' cost shortfall](docs/PACK_COST_DIAGNOSTIC.md) using
+explicit fee and slippage inputs, without an API key or additional training.
