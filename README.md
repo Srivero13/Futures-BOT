@@ -213,3 +213,5 @@ explicit fee and slippage inputs, without an API key or additional training.
 
 Test a separate [fixed hourly trend hypothesis](docs/HOURLY_TREND.md) on development
 data with delayed fills and costs, preserving the frozen microstructure models.
+Its saved-trade robustness diagnostic checks best-trade concentration and adverse
+slippage sensitivity without retuning the strategy.

@@ -46,3 +46,19 @@ The simulator assumes full fills, fixed costs and hypothetical quantity filters;
 it does not model queue position, historical exchange filters or intrabar risk.
 The reported maximum drawdown samples opens and closes only. No stop-loss,
 funding, taxes or infrastructure expenses are included. All outputs stay unapproved.
+
+## Saved-trade robustness
+
+```bash
+python diagnose_hourly_robustness.py \
+  --report data/eth-hourly-trend-development.json \
+  --output data/eth-hourly-trend-robustness.json
+```
+
+This checks saved trade accounting and reports concentration after removing the
+best trade, plus fixed extra slippage of 0, 0.5, 1 and 2 bps per side. Reference
+prices are recovered from the original impact assumptions, adverse impact is
+increased, and fees are recomputed on the new fills. Quantities and trade times
+remain fixed. This is attribution, not a replay: a full simulation could change
+position sizing, cash constraints and entries. Zero stress must reconcile with
+the original totals. It neither reads the reserved period nor changes the rule.
