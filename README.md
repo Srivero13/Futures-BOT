@@ -221,3 +221,6 @@ on identical delayed hourly targets, keeping the reserved period excluded.
 
 Read the [research evidence review](docs/RESEARCH_REVIEW.md) and build a local
 source-hashed dossier before starting another strategy variant.
+
+The [fixed daily-breakout protocol](docs/DAILY_BREAKOUT_PROTOCOL.md) defines a
+separate four-hour holding hypothesis and failure screens before evaluation.
