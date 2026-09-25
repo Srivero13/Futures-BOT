@@ -218,3 +218,6 @@ slippage sensitivity without retuning the strategy.
 
 Compare [ETH-only forecasts against fixed BTC-context features](docs/CROSS_ASSET.md)
 on identical delayed hourly targets, keeping the reserved period excluded.
+
+Read the [research evidence review](docs/RESEARCH_REVIEW.md) and build a local
+source-hashed dossier before starting another strategy variant.
