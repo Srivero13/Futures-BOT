@@ -74,3 +74,26 @@ Late-month candidates are left unfilled when their exit would cross the boundary
 Slippage scenarios hold quantities and selected trades fixed and recalculate
 fees; they are attribution, not new portfolio simulations. Sum of monthly P&L
 is not a compounded six-month return. All outputs remain unapproved.
+
+## Sampling coverage audit (no outcomes)
+
+The rule observes only the close immediately before each UTC hour. A breakout
+on another minute can therefore go unobserved. Quantify this without changing
+the strategy or inspecting future returns:
+
+```bash
+python -u audit_breakout_sampling.py \
+  --files data/market-expanded/binance-ETHUSDT-*.csv \
+  --output data/eth-breakout-sampling-audit.json
+```
+
+This counts the same causal condition at every minute and at the hourly subset.
+The signal candle is excluded from its 24-hour high comparison. A bounded
+monotonic deque computes the same maximum as the original rule. A test compares
+it with brute-force maxima and the actual hourly rule.
+
+Counts are observations, not independent events or trades. Repeated qualifying
+minutes can belong to the same move; hourly counts also include times when the
+strategy would hold a position. There is no future-return, execution or P&L
+calculation. A larger minute count is not evidence for profitability and does
+not retroactively change the fixed hourly experiment.

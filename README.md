@@ -224,3 +224,5 @@ source-hashed dossier before starting another strategy variant.
 
 The [fixed daily-breakout protocol](docs/DAILY_BREAKOUT_PROTOCOL.md) defines a
 separate four-hour holding hypothesis and failure screens before evaluation.
+Its sampling audit measures which qualifying minutes fall outside the hourly
+grid without evaluating future returns or changing the rule.
