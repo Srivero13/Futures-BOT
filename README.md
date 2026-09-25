@@ -210,3 +210,6 @@ The helper sends no orders and saves no credentials.
 
 [Measure the frozen models' cost shortfall](docs/PACK_COST_DIAGNOSTIC.md) using
 explicit fee and slippage inputs, without an API key or additional training.
+
+Test a separate [fixed hourly trend hypothesis](docs/HOURLY_TREND.md) on development
+data with delayed fills and costs, preserving the frozen microstructure models.
