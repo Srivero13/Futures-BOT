@@ -51,7 +51,49 @@ RMSE against zero, Spearman correlation and calibration-defined buckets.
 Nothing here estimates executable P&L, saves a deployable model, selects a winner
 or sends orders. Small datasets may finish quickly and underutilize the GPU.
 
-## Learning controls
+## Bounded worker supervision
+
+The launcher checks both workers concurrently. A failed worker stops its peer
+and prevents later folds from starting; it no longer waits indefinitely on the
+first worker before noticing that the second failed.
+
+`--worker-timeout-seconds 3600` is the default deadline for each monthly worker
+pair. It excludes the initial CUDA preflight. Change this operational limit
+explicitly for a justified longer job; it does not change epochs or model rules.
+
+Each pair writes `05-workers.json` through `08-workers.json` alongside its logs.
+States include `starting`, `running`, `succeeded`, `failed`, `timed_out` and
+`interrupted`. Status contains the last heartbeat, elapsed time, child PIDs,
+return codes and log paths. A heartbeat is printed every five seconds while
+workers run. Full command arguments and environment variables are not copied
+into status files. A successful process exit is not a model approval or proof
+that a report is economically useful.
+
+On Ubuntu/POSIX, children run in separate process groups. Ctrl+C or SIGTERM,
+worker failure, deadline expiry and supervisor exceptions trigger cleanup.
+Cleanup first requests termination, waits up to five seconds across the pair,
+then force-stops remaining groups and reaps direct children with bounded waits.
+Windows cleanup targets direct children only; descendant cleanup is not certified.
+An OS crash, SIGKILL, power loss or uninterruptible kernel task cannot be made
+recoverable by this Python supervisor. A stale `running` status is not proof
+that a worker still exists. There is no automatic retry or checkpoint resume.
+
+Inspect a pair after a previously authorized run:
+
+```bash
+python -m json.tool data/YOUR-PARALLEL-RUN/05-workers.json
+```
+
+Verify supervision without CUDA, market data, downloads or training:
+
+```bash
+python -m unittest discover -s tests -p 'test_process_supervision.py' -v
+```
+
+These tests launch short local subprocess fixtures and intentionally exercise
+failure and timeout paths. They do not rerun the closed strategy experiments.
+
+## Model learning controls
 
 `python -m unittest discover -s tests -p test_parallel_learning.py -v` checks
 raw flow/candle construction, timing and exact labels with a known synthetic

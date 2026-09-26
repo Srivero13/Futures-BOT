@@ -229,6 +229,10 @@ on identical delayed hourly targets, keeping the reserved period excluded.
 Read the [research evidence review](docs/RESEARCH_REVIEW.md) and build a local
 source-hashed dossier before starting another strategy variant.
 
+The parallel research coordinator now has [bounded worker supervision](docs/PARALLEL_RESEARCH.md#bounded-worker-supervision):
+concurrent failure detection, per-pair deadlines, heartbeat status and cleanup.
+This is an operational improvement, not a reason to rerun rejected strategies.
+
 The [fixed daily-breakout protocol](docs/DAILY_BREAKOUT_PROTOCOL.md) defines a
 separate four-hour holding hypothesis and failure screens before evaluation.
 Its sampling audit measures which qualifying minutes fall outside the hourly
