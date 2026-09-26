@@ -2,6 +2,13 @@
 
 A CPU-based Binance spot research engine with two virtual accounts, Decimal accounting, a calibrated model interface, and a supervised WebSocket coordinator. **No real orders are sent. No profitable strategy has been demonstrated.**
 
+**Research status:** the current development-testing phase is closed with no
+candidate promoted. The every-minute breakout produced 162 simulated trades
+and -20.833 USDT summed across independently reset months. See the
+[phase closeout](docs/DEVELOPMENT_PHASE_CLOSEOUT.md) for the complete decision,
+evidence limitations and requirements for further research. The research
+scripts below remain available for reproducibility, not as recommended strategies.
+
 Patch 1.6.2 treats the final deadline-bounded socket read timeout as normal session completion, avoiding a false reconnect/error at the requested end time. Earlier read timeouts and continuous-session failures still trigger recovery.
 
 Patch 1.6.1 adds periodic observer/paper console progress, including connection state, elapsed/remaining time, message counts, receipt-fresh quotes, and errors. See [progress options](docs/START_HERE.md#console-progress).
@@ -201,3 +208,32 @@ three-feature baseline using existing captures and identical delayed-label rows.
 
 [Freeze all three feature models](docs/FROZEN_FEATURE_PACK.md) once and evaluate
 them without refitting on fresh recordings across days.
+
+[Consolidate frozen evaluations and document actual account fees](docs/PACK_SUMMARY_AND_FEES.md)
+without modifying the frozen comparison pack.
+
+Optionally [query Spot commission rates locally with read-only credentials](docs/READ_ONLY_SPOT_FEES.md).
+The helper sends no orders and saves no credentials.
+
+[Measure the frozen models' cost shortfall](docs/PACK_COST_DIAGNOSTIC.md) using
+explicit fee and slippage inputs, without an API key or additional training.
+
+Test a separate [fixed hourly trend hypothesis](docs/HOURLY_TREND.md) on development
+data with delayed fills and costs, preserving the frozen microstructure models.
+Its saved-trade robustness diagnostic checks best-trade concentration and adverse
+slippage sensitivity without retuning the strategy.
+
+Compare [ETH-only forecasts against fixed BTC-context features](docs/CROSS_ASSET.md)
+on identical delayed hourly targets, keeping the reserved period excluded.
+
+Read the [research evidence review](docs/RESEARCH_REVIEW.md) and build a local
+source-hashed dossier before starting another strategy variant.
+
+The [fixed daily-breakout protocol](docs/DAILY_BREAKOUT_PROTOCOL.md) defines a
+separate four-hour holding hypothesis and failure screens before evaluation.
+Its sampling audit measures which qualifying minutes fall outside the hourly
+grid without evaluating future returns or changing the rule.
+
+A separately recorded [every-minute breakout variant](docs/MINUTE_BREAKOUT_PROTOCOL.md)
+changes only sampling frequency and retains the original execution assumptions
+and development failure screens.
