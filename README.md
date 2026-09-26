@@ -226,3 +226,7 @@ The [fixed daily-breakout protocol](docs/DAILY_BREAKOUT_PROTOCOL.md) defines a
 separate four-hour holding hypothesis and failure screens before evaluation.
 Its sampling audit measures which qualifying minutes fall outside the hourly
 grid without evaluating future returns or changing the rule.
+
+A separately recorded [every-minute breakout variant](docs/MINUTE_BREAKOUT_PROTOCOL.md)
+changes only sampling frequency and retains the original execution assumptions
+and development failure screens.
