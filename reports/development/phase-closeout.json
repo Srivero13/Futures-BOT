@@ -1,0 +1,37 @@
+{
+  "decision_date_operator_timezone": "2026-09-25",
+  "timezone": "America/La_Paz",
+  "status": "development_phase_closed_no_candidate_promoted",
+  "approved": false,
+  "evidence_origin": "Operator-supplied console summaries; not independent full-data reproduction in the repository workspace",
+  "development_period": {"start": "2026-03-01", "end_exclusive": "2026-09-01"},
+  "reserved_from": "2026-09-01",
+  "reserve_scope": "Historical strategy evaluation; separately inspected September live captures are not untouched data",
+  "final_experiment": {
+    "script": "research_minute_breakout.py",
+    "local_report": "data/eth-minute-breakout-development.json",
+    "local_protocol": "data/eth-minute-breakout-development.protocol.json",
+    "closed_trades": 162,
+    "positive_months": 2,
+    "folds": 6,
+    "sum_independent_month_net_pnl": "-20.832687600450167000000",
+    "net_pnl_excluding_best_trade": "-28.492326570129487000000",
+    "extra_1bps_per_side_net_pnl_fixed_quantity": "-24.073812401103556000000",
+    "development_screen_failures": [
+      "Fewer than four positive months",
+      "Not positive after removing best trade",
+      "Not positive with extra 1 bps slippage per side"
+    ]
+  },
+  "preserve_local_reports": [
+    "data/research-review.json",
+    "data/eth-hourly-trend-development.json",
+    "data/eth-hourly-trend-robustness.json",
+    "data/eth-btc-context-development.json",
+    "data/eth-daily-breakout-development.json",
+    "data/eth-breakout-sampling-audit.json",
+    "data/eth-minute-breakout-development.json"
+  ],
+  "runtime_effect": "None; documentation record only, not a trading guard or model approval",
+  "next_phase_prerequisite": "A distinct written mechanism, fixed protocol and experiment budget before new strategy testing"
+}

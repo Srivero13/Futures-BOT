@@ -2,6 +2,11 @@
 
 ## Current decision
 
+The development phase has now closed with no promoted candidate. See the
+[closeout](DEVELOPMENT_PHASE_CLOSEOUT.md) for the subsequently completed hourly
+and every-minute breakout experiments. The original dossier below remains an
+accurate record of its narrower scope and is not overwritten.
+
 Keep the evaluated strategies research-only. Software tests, stable collection
 and reproducible forecasts are engineering achievements; none establishes a
 profitable strategy. Do not treat hours of training or hardware upgrades as a
