@@ -40,3 +40,39 @@ These tests cover application interrupts and simulated write/commit failures.
 They do not certify recovery from hardware faults, filesystem corruption, or
 power loss. A failure before commit is tested; an ambiguous error after a commit
 still requires inspecting the persisted ledger before retrying with a new ID.
+
+## Abrupt process termination
+
+A separate subprocess test now kills a test-owned worker at three checkpoints:
+
+| Checkpoint | Expected state after reopening |
+| --- | --- |
+| First account updated, transaction open | No account, risk, audit, or deduplication changes |
+| All transaction writes finished, before commit | No pending writes survive |
+| Commit returned, before acknowledging completion | Both trades and their deduplication records survive |
+
+Each case runs SQLite's integrity check, compares recovered account/risk state
+with a clean or committed reference ledger, and retries the same event ID.
+The retry must create exactly two trades for an uncommitted event, or no new
+trades for an already committed event.
+
+Run this offline on the filesystem used for the bot:
+
+```bash
+python -m unittest discover -s tests -p 'test_ledger_process_crash.py' -v
+```
+
+The test uses disposable ledgers in the system temporary directory and kills
+only its own child process. To test the filesystem containing the project data
+on Linux, choose a temporary directory there:
+
+```bash
+mkdir -p data/recovery-test-tmp
+TMPDIR="$PWD/data/recovery-test-tmp" python -m unittest discover -s tests -p 'test_ledger_process_crash.py' -v
+```
+
+No existing bot process or ledger is accessed. A process kill leaves the OS and
+storage running; this is not a power-loss or disk-failure test. The checkpoints
+surround commit rather than interrupting SQLite inside commit. Event-ID
+deduplication is tested while those records are retained; this is not an
+exchange-side exactly-once guarantee.
