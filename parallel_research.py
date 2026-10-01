@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 from engine_v1.operations import atomic_json
 from engine_v1.processes import run_workers
+from engine_v1.research_artifacts import read_json, validate_report
 
 
 def main():
@@ -34,18 +35,45 @@ def main():
         'worker_timeout_seconds':a.worker_timeout_seconds,
         'note':'Already inspected development periods. No promotion or trading.'})
     env=dict(os.environ,OPENBLAS_NUM_THREADS='2',OMP_NUM_THREADS='2',MKL_NUM_THREADS='2')
-    for month in range(5,9):
-        jobs=[]
-        for backend in ('polynomial','cuda-mlp'):
-            log=a.output_dir/f'{month:02d}-{backend}.log'
-            cmd=[sys.executable,'-u',str(source/'evaluate_tradeflow.py'),'--audits',
-                *[str(a.audit_dir/f'ETHUSDT-2026-{m:02d}-alignment.json') for m in range(month-2,month+1)],
-                '--symbol','ETHUSDT','--start',f'2026-{month-2:02d}-01','--reserve-from','2026-09-01',
-                '--backend',backend,'--output',str(a.output_dir/f'{month:02d}-{backend}.json')]
-            jobs.append({'name':backend,'argv':cmd,'log':log})
-            print(f'[parallel] month={month} backend={backend} log={log}',flush=True)
-        run_workers(jobs,a.output_dir/f'{month:02d}-workers.json',a.worker_timeout_seconds,env=env)
-        print(f'[parallel] month={month} both workers complete',flush=True)
+    verified=[]
+    def save_status(state):
+        atomic_json(a.output_dir/'batch-status.json', {
+            'approved':False,'state':state,'expected_reports':8,'verified_reports':verified,
+            'note':'Artifact validation only; no strategy approval or profitability claim.'})
+    save_status('running')
+    try:
+        for month in range(5,9):
+            jobs=[]
+            audits={str((a.audit_dir/f'ETHUSDT-2026-{m:02d}-alignment.json').resolve()):
+                    read_json(a.audit_dir/f'ETHUSDT-2026-{m:02d}-alignment.json')[1]
+                    for m in range(month-2,month+1)}
+            for backend in ('polynomial','cuda-mlp'):
+                log=a.output_dir/f'{month:02d}-{backend}.log'
+                cmd=[sys.executable,'-u',str(source/'evaluate_tradeflow.py'),'--audits',
+                    *[str(a.audit_dir/f'ETHUSDT-2026-{m:02d}-alignment.json') for m in range(month-2,month+1)],
+                    '--symbol','ETHUSDT','--start',f'2026-{month-2:02d}-01','--reserve-from','2026-09-01',
+                    '--backend',backend,'--output',str(a.output_dir/f'{month:02d}-{backend}.json')]
+                jobs.append({'name':backend,'argv':cmd,'log':log})
+                print(f'[parallel] month={month} backend={backend} log={log}',flush=True)
+            run_workers(jobs,a.output_dir/f'{month:02d}-workers.json',a.worker_timeout_seconds,env=env)
+            for backend in ('polynomial','cuda-mlp'):
+                verified.append(validate_report(a.output_dir/f'{month:02d}-{backend}.json',
+                                                month,backend,audits))
+            save_status('running')
+            print(f'[parallel] month={month} both reports verified',flush=True)
+        # Recheck fingerprints immediately before the completion status is written.
+        for item in verified:
+            path=a.output_dir/item['file']
+            if (read_json(path)[1]!=item['sha256'] or
+                    read_json(path.with_suffix('.protocol.json'))[1]!=item['protocol_sha256']):
+                raise ValueError('Verified report changed during batch')
+        save_status('completed')
+    except KeyboardInterrupt:
+        save_status('interrupted')
+        raise
+    except Exception:
+        save_status('failed')
+        raise
     print(f'Completed: {a.output_dir}; eight reports, research-only.',flush=True)
 
 

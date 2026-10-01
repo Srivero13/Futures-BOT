@@ -100,3 +100,23 @@ raw flow/candle construction, timing and exact labels with a known synthetic
 signal, a shuffled-label negative control, nonlinear polynomial recovery, and
 (optional PyTorch) neural learning on CPU. Real-world profitability does not
 follow from passing these controls.
+
+### Report completion checks
+
+A successful worker exit is followed by report validation before another month
+starts. The coordinator requires both reports and their saved protocols, the
+requested backend/symbol/date boundaries, matching audit fingerprints, finite
+metrics, valid paired row counts, and agreement between summaries and rankings.
+
+`batch-status.json` records `running`, `failed`, `interrupted`, or `completed`.
+Only eight validated reports allow completion. Report and protocol SHA-256
+fingerprints are rechecked before publishing that status. This checks artifact
+consistency; it does not reproduce forecasts or certify profitability. Abrupt
+power loss or an uncatchable termination can leave a stale running status.
+
+These checks apply to new runs; existing research reports are unchanged. There
+is no need to rerun rejected experiments. Test the completion checks without CUDA:
+
+```bash
+python -m unittest discover -s tests -p 'test_research_artifacts.py' -v
+```
