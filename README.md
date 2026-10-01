@@ -241,3 +241,6 @@ grid without evaluating future returns or changing the rule.
 A separately recorded [every-minute breakout variant](docs/MINUTE_BREAKOUT_PROTOCOL.md)
 changes only sampling frequency and retains the original execution assumptions
 and development failure screens.
+
+Observe/paper runs now stop on local ledger or health-file failures instead of
+retrying them as network outages. See [stream failure handling](docs/STREAM_FAILURE_HANDLING.md).
