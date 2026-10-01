@@ -82,3 +82,30 @@ def validate_report(path, month, backend, audit_hashes):
                 'protocol_sha256': protocol_digest, 'month': month, 'backend': backend}
     except (KeyError, TypeError, AttributeError) as error:
         raise ValueError('Malformed paired research report') from error
+
+
+def validate_pair(paths, month, audit_hashes):
+    """Validate two backend artifacts and their shared evaluation contract."""
+    backends = ('polynomial', 'cuda-mlp')
+    if len(paths) != 2:
+        raise ValueError('Expected exactly two backend reports')
+    verified = [validate_report(path, month, backend, audit_hashes)
+                for path, backend in zip(paths, backends)]
+    reports = []
+    for path, item in zip(paths, verified):
+        report, digest = read_json(path)
+        if digest != item['sha256']:
+            raise ValueError('Report changed during pair validation')
+        reports.append(report)
+    # Only backend identity and CUDA runtime metadata may differ.
+    protocols = [{k: v for k, v in r['protocol'].items()
+                  if k not in ('backend', 'runtime')} for r in reports]
+    if protocols[0] != protocols[1]:
+        raise ValueError('CPU/GPU protocols or source fingerprints differ')
+    left, right = (r['summary'] for r in reports)
+    if left['paired_rows'] != right['paired_rows']:
+        raise ValueError('CPU/GPU paired row counts differ')
+    if not math.isclose(left['zero_rmse_log_bps'], right['zero_rmse_log_bps'],
+                        rel_tol=1e-12, abs_tol=1e-12):
+        raise ValueError('CPU/GPU target baseline differs')
+    return verified

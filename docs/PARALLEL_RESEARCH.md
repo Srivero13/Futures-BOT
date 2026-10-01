@@ -120,3 +120,12 @@ is no need to rerun rejected experiments. Test the completion checks without CUD
 ```bash
 python -m unittest discover -s tests -p 'test_research_artifacts.py' -v
 ```
+
+CPU and GPU artifacts are also checked as a pair. Their shared protocols
+(including input and code hashes), train/calibration/test row counts, and
+zero-forecast RMSE must agree. Only backend identity and runtime metadata may
+differ. A mismatched pair fails the batch before the following month starts;
+neither report is added to the verified list for that month.
+
+Matching counts and baseline metrics are consistency checks, not proof of
+row-by-row identity: these reports do not contain individual evaluation rows.

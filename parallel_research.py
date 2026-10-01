@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 from engine_v1.operations import atomic_json
 from engine_v1.processes import run_workers
-from engine_v1.research_artifacts import read_json, validate_report
+from engine_v1.research_artifacts import read_json, validate_pair
 
 
 def main():
@@ -56,9 +56,9 @@ def main():
                 jobs.append({'name':backend,'argv':cmd,'log':log})
                 print(f'[parallel] month={month} backend={backend} log={log}',flush=True)
             run_workers(jobs,a.output_dir/f'{month:02d}-workers.json',a.worker_timeout_seconds,env=env)
-            for backend in ('polynomial','cuda-mlp'):
-                verified.append(validate_report(a.output_dir/f'{month:02d}-{backend}.json',
-                                                month,backend,audits))
+            verified.extend(validate_pair(
+                [a.output_dir/f'{month:02d}-{backend}.json'
+                 for backend in ('polynomial','cuda-mlp')], month, audits))
             save_status('running')
             print(f'[parallel] month={month} both reports verified',flush=True)
         # Recheck fingerprints immediately before the completion status is written.

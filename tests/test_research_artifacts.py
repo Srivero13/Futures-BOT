@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 from types import SimpleNamespace
-from engine_v1.research_artifacts import validate_report
+from engine_v1.research_artifacts import validate_report, validate_pair
 import parallel_research
 import engine_v1.research_mlp
 
@@ -48,7 +48,32 @@ class ArtifactTests(unittest.TestCase):
             fixture(path)
             self.assertEqual(validate_report(path,5,'polynomial',{})['month'],5)
 
-    def run_batch(self, tmp, missing=False):
+    def test_pair_rejects_individually_valid_but_different_inputs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            paths=[Path(tmp)/f'{b}.json' for b in ('polynomial','cuda-mlp')]
+            for mutation in ('counts','baseline','sources','code','features'):
+                fixture(paths[0])
+                r=fixture(paths[1],backend='cuda-mlp')
+                if mutation=='counts':
+                    r['summary']['paired_rows']['train']=101
+                elif mutation=='baseline':
+                    r['summary']['zero_rmse_log_bps']=3
+                    for ranking in r['rankings'].values():
+                        ranking['zero_rmse_log_bps_same_rows']=3
+                else:
+                    key={'sources':'input_sha256','code':'code_sha256',
+                         'features':'features'}[mutation]
+                    r['protocol'][key]={'different':'value'}
+                paths[1].write_text(json.dumps(r))
+                paths[1].with_suffix('.protocol.json').write_text(json.dumps(r['protocol']))
+                # Both reports pass independently, but cannot form a paired comparison.
+                validate_report(paths[1],5,'cuda-mlp',{})
+                with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                    validate_pair(paths,5,{})
+            fixture(paths[1],backend='cuda-mlp')
+            self.assertEqual(len(validate_pair(paths,5,{})),2)
+
+    def run_batch(self, tmp, missing=False, mismatch=False):
         root=Path(tmp); audit=root/'audits'; audit.mkdir()
         for month in range(3,9):
             (audit/f'ETHUSDT-2026-{month:02d}-alignment.json').write_text('{}')
@@ -61,15 +86,18 @@ class ArtifactTests(unittest.TestCase):
                 audits={str((audit/f'ETHUSDT-2026-{m:02d}-alignment.json').resolve()):
                         parallel_research.read_json(audit/f'ETHUSDT-2026-{m:02d}-alignment.json')[1]
                         for m in range(month-2,month+1)}
-                fixture(dest,month,job['name'],audits)
+                r=fixture(dest,month,job['name'],audits)
+                if mismatch and job['name']=='cuda-mlp':
+                    r['summary']['paired_rows']['train']=101
+                    dest.write_text(json.dumps(r))
         torch=SimpleNamespace(__version__='test',version=SimpleNamespace(cuda='test'),
                               cuda=SimpleNamespace(get_device_name=lambda _: 'test'))
         with patch.dict('sys.modules',{'torch':torch}), patch(
                 'engine_v1.research_mlp.fit_predict'), patch(
                 'parallel_research.run_workers',side_effect=worker) as workers, patch(
                 'sys.argv',['parallel_research.py','--audit-dir',str(audit),'--output-dir',str(output)]):
-            if missing:
-                with self.assertRaises(OSError): parallel_research.main()
+            if missing or mismatch:
+                with self.assertRaises((OSError,ValueError)): parallel_research.main()
                 self.assertEqual(workers.call_count,1)
             else: parallel_research.main()
         return json.loads((output/'batch-status.json').read_text())
@@ -87,3 +115,10 @@ class ArtifactTests(unittest.TestCase):
             self.assertEqual(len(status['verified_reports']),8)
             self.assertFalse(status['approved'])
             self.assertTrue(all(len(x['sha256'])==64 for x in status['verified_reports']))
+
+
+    def test_inconsistent_pair_stops_batch_without_partial_verified_pair(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            status=self.run_batch(tmp,mismatch=True)
+            self.assertEqual(status['state'],'failed')
+            self.assertEqual(status['verified_reports'],[])
