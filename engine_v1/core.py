@@ -16,6 +16,20 @@ def monetary(fn):
     return wrapped
 
 
+
+def rollback_failed_transaction(db, error):
+    """Preserve the original failure; discard a connection if rollback fails."""
+    try:
+        if db.in_transaction:
+            db.execute('ROLLBACK')
+    except (sqlite3.Error, OSError) as cleanup_error:
+        try:
+            db.close()
+        except (sqlite3.Error, OSError) as close_error:
+            error.add_note('Connection close also failed: '+type(close_error).__name__)
+        error.add_note('Rollback failed; connection must not be reused: '+type(cleanup_error).__name__)
+
+
 def dec(value):
     if isinstance(value,(float,bool)): raise ValueError('Use decimal strings, not floats/bools')
     x=Decimal(value)
@@ -113,8 +127,10 @@ class Portfolio:
                 self.db.execute('INSERT OR IGNORE INTO accounts VALUES(?,?)',(a['id'],json.dumps(state)))
             self.db.execute('INSERT OR IGNORE INTO risk VALUES(1,?)',(json.dumps({'peak':str(total),'day_start':str(total),'day':-1,'halted':False,'day_halted':False}),))
             self.db.execute('COMMIT')
-        except Exception:
-            self.db.execute('ROLLBACK');self.db.close();raise
+        except BaseException as error:
+            try:rollback_failed_transaction(self.db,error)
+            finally:self.db.close()
+            raise
 
     def states(self):return [json.loads(r[0]) for r in self.db.execute('SELECT state FROM accounts ORDER BY id')]
 
@@ -201,8 +217,9 @@ class Portfolio:
             if not stale_portfolio and eq_after<=dec(risk['day_start'])*(1-self.daily):risk['day_halted']=True
             self.db.execute('UPDATE risk SET state=? WHERE id=1',(json.dumps(risk),))
             self.db.execute('COMMIT');return result
-        except Exception:
-            self.db.execute('ROLLBACK');raise
+        except BaseException as error:
+            rollback_failed_transaction(self.db,error)
+            raise
 
     def prune(self,now_ms,retention_ms=86400000):
         if retention_ms<86400000:raise ValueError('Retain at least one day of deduplication')

@@ -19,3 +19,24 @@ Run offline regression checks:
 ```bash
 python -m unittest discover -s tests -p 'test_runtime_errors.py' -v
 ```
+
+## Interrupted paper transactions
+
+Paper transactions now roll back on interrupts as well as ordinary exceptions.
+An interruption after updating the first account must roll back all account,
+risk, event, and deduplication writes in that transaction. If rollback itself
+fails, the connection is closed and the original error is retained with a
+cleanup note; the connection must not be reused.
+
+Fault-injection tests reopen a real temporary SQLite ledger, retry the failed
+event, reopen it again, and verify that replaying the committed event does not
+duplicate trades:
+
+```bash
+python -m unittest discover -s tests -p 'test_ledger_recovery.py' -v
+```
+
+These tests cover application interrupts and simulated write/commit failures.
+They do not certify recovery from hardware faults, filesystem corruption, or
+power loss. A failure before commit is tested; an ambiguous error after a commit
+still requires inspecting the persisted ledger before retrying with a new ID.
