@@ -176,3 +176,32 @@ Check the workflow with disposable databases:
 ```bash
 python -m unittest discover -s tests -p 'test_ledger_restore.py' -v
 ```
+
+### Reconcile the current paper ledger
+
+`paper_report.py` supports the older single-account ledger. For the current
+multi-account coordinator, use:
+
+```bash
+python report_paper_ledger.py data/v11-paper.sqlite3
+```
+
+This opens an existing ledger read-only and reads one committed SQLite snapshot.
+It reconstructs each account's cash, quantity, cost basis, realized P&L and fees
+from its complete saved trade history, then compares those values with stored
+account state and trade payloads. Discrepancies are listed and produce exit code
+2. Missing files are not created; no balances or risk flags are repaired.
+
+Open positions include the timestamp of their last recorded mark.
+`historical_marked_pnl` is a historical ledger valuation, not current executable
+P&L. Reconciliation proves internal consistency only: it does not verify market
+fills, detect coordinated edits to both history and balances, establish data
+completeness, or approve a strategy. Decimal comparisons allow an absolute
+rounding tolerance of 1e-40 for the ledger's 50-digit calculations.
+
+Test with temporary databases, including an open WAL ledger and deliberately
+altered balances/payloads:
+
+```bash
+python -m unittest discover -s tests -p 'test_paper_ledger_report.py' -v
+```
