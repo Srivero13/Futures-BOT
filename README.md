@@ -248,3 +248,7 @@ retrying them as network outages. See [stream failure handling](docs/STREAM_FAIL
 A fixed [development cost-feasibility audit](docs/COST_OPPORTUNITY_AUDIT.md)
 measures how often hourly-sampled ETH reference moves cover existing cost
 assumptions. It produces descriptive statistics, not trading signals or approval.
+
+[Relative recovery RR-01](docs/RELATIVE_RECOVERY_PROTOCOL.md) defines one fixed
+ETH/BTC contextual recovery hypothesis, with unchanged costs, a one-run budget,
+and the existing development failure screens. It remains research-only.
