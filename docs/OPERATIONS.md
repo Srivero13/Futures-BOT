@@ -145,3 +145,34 @@ python benchmark_v11.py
 ```
 
 The downloader checks 12 official monthly archives and writes validated datasets atomically. The locked experiment is `reports/v1.1/PROTOCOL.json`. Detailed trade logs regenerate locally; concise results and model artifacts are versioned. `benchmark_v11.py` requires the original v1.0 commit in Git history. These are development measurements; benchmark each deployment host and connection separately.
+
+### Restore a paper backup to a new ledger
+
+Stop the paper coordinator first and preserve the original database and its
+SQLite sidecars. Restore a verified backup into a **new** filename:
+
+```bash
+python restore_paper_ledger.py \
+  --backup data/backups/v11-first.sqlite3 \
+  --destination data/v11-paper-restored.sqlite3
+```
+
+The command uses SQLite's backup API, checks database integrity and expected
+ledger structure, then publishes without overwriting an existing file. It
+preserves account balances/positions, risk state, configuration fingerprint,
+trade history, and duplicate-event records. Destination SQLite sidecars and
+coordinator locks cause refusal. Locks protect cooperating bot processes;
+do not open the destination with other database tools during restoration.
+
+Restoration does not start the bot or change its configured database path.
+Inspect the result before changing the paper configuration to use it. Keep
+the same account and risk configuration; the normal fingerprint check still
+applies. A backup reflects its creation time: later activity cannot be recovered
+from it, and a restored open paper position is historical state rather than a
+current market valuation. No exchange reconciliation or economic audit is done.
+
+Check the workflow with disposable databases:
+
+```bash
+python -m unittest discover -s tests -p 'test_ledger_restore.py' -v
+```
