@@ -244,3 +244,7 @@ and development failure screens.
 
 Observe/paper runs now stop on local ledger or health-file failures instead of
 retrying them as network outages. See [stream failure handling](docs/STREAM_FAILURE_HANDLING.md).
+
+A fixed [development cost-feasibility audit](docs/COST_OPPORTUNITY_AUDIT.md)
+measures how often hourly-sampled ETH reference moves cover existing cost
+assumptions. It produces descriptive statistics, not trading signals or approval.
