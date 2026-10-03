@@ -251,4 +251,5 @@ assumptions. It produces descriptive statistics, not trading signals or approval
 
 [Relative recovery RR-01](docs/RELATIVE_RECOVERY_PROTOCOL.md) defines one fixed
 ETH/BTC contextual recovery hypothesis, with unchanged costs, a one-run budget,
-and the existing development failure screens. It remains research-only.
+and the existing development failure screens. [RR-01 is now closed](docs/RR01_CLOSEOUT.md):
+23 trades, two profitable months, and a net loss; no candidate was promoted.

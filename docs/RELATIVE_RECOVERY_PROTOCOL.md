@@ -1,6 +1,7 @@
 # ETH relative-recovery experiment RR-01
 
-Status: fixed retrospective development experiment, unapproved. This document
+Status: closed after failure of all four development screens; unapproved.
+See [RR-01 closeout](RR01_CLOSEOUT.md). The command below is retained for reproduction. This document
 defines the rule before this runner's market-data results are inspected.
 March–August 2026 was already used in other studies; this is not an untouched
 holdout or an independently preregistered validation.
