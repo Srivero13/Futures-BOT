@@ -260,3 +260,6 @@ promote any rejected spot strategy.
 
 [Saved USD-M pilot audit](docs/USDM_PILOT_AUDIT.md) rechecks retained source files,
 conversion equality and timestamp alignment to the corresponding spot day.
+
+[Bounded USD-M batch](docs/USDM_BATCH.md) downloads and audits up to seven days,
+with per-day progress, preserved failure status and final integrity checks.
