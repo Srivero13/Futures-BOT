@@ -263,3 +263,6 @@ conversion equality and timestamp alignment to the corresponding spot day.
 
 [Bounded USD-M batch](docs/USDM_BATCH.md) downloads and audits up to seven days,
 with per-day progress, preserved failure status and final integrity checks.
+
+[USD-M funding history](docs/USDM_FUNDING.md) collects bounded public settlement
+records with raw responses and provenance. Schedule completeness remains unverified.
