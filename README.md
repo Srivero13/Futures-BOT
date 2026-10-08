@@ -257,3 +257,6 @@ and the existing development failure screens. [RR-01 is now closed](docs/RR01_CL
 [USD-M futures data pilot](docs/USDM_DATA_PILOT.md) acquires and validates one
 separate day of public futures candles. It does not enable futures trading or
 promote any rejected spot strategy.
+
+[Saved USD-M pilot audit](docs/USDM_PILOT_AUDIT.md) rechecks retained source files,
+conversion equality and timestamp alignment to the corresponding spot day.
