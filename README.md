@@ -272,3 +272,6 @@ conversion, and reports alignment to an explicitly assumed eight-hour UTC grid.
 
 [Funding cash-flow diagnostic](docs/FUNDING_CASHFLOWS.md) calculates separate
 unit long/short funding components from audited records, without strategy P&L.
+
+[Fixed-week futures exposure attribution](docs/USDM_EXPOSURE.md) combines
+reference-price changes and funding for hypothetical unit exposures, before costs.
