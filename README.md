@@ -278,3 +278,6 @@ reference-price changes and funding for hypothetical unit exposures, before cost
 
 [Fixed-time futures round trip](docs/USDM_ROUNDTRIP.md) integrates hypothetical
 fills, fees and held-period funding while surfacing ambiguous settlement boundaries.
+
+[USD-M mark-price pilot](docs/USDM_MARKS.md) collects a separate complete day of
+valuation candles for future equity-path work; these are not executable prices.
