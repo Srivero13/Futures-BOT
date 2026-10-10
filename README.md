@@ -275,3 +275,6 @@ unit long/short funding components from audited records, without strategy P&L.
 
 [Fixed-week futures exposure attribution](docs/USDM_EXPOSURE.md) combines
 reference-price changes and funding for hypothetical unit exposures, before costs.
+
+[Fixed-time futures round trip](docs/USDM_ROUNDTRIP.md) integrates hypothetical
+fills, fees and held-period funding while surfacing ambiguous settlement boundaries.
