@@ -266,3 +266,6 @@ with per-day progress, preserved failure status and final integrity checks.
 
 [USD-M funding history](docs/USDM_FUNDING.md) collects bounded public settlement
 records with raw responses and provenance. Schedule completeness remains unverified.
+
+[Funding integrity audit](docs/USDM_FUNDING_AUDIT.md) verifies saved API pages and
+conversion, and reports alignment to an explicitly assumed eight-hour UTC grid.
