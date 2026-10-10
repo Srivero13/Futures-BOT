@@ -269,3 +269,6 @@ records with raw responses and provenance. Schedule completeness remains unverif
 
 [Funding integrity audit](docs/USDM_FUNDING_AUDIT.md) verifies saved API pages and
 conversion, and reports alignment to an explicitly assumed eight-hour UTC grid.
+
+[Funding cash-flow diagnostic](docs/FUNDING_CASHFLOWS.md) calculates separate
+unit long/short funding components from audited records, without strategy P&L.
