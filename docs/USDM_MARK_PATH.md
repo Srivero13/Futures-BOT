@@ -36,3 +36,25 @@ remains unverified. Existing output files are refused.
 Tests use synthetic marks and funding to verify signs, settlement timing, terminal
 reconciliation, drawdown, missing data and ambiguous or duplicate funding rejection.
 Actual market results must be calculated with the operator's audited files.
+
+## Bounds from minute high/low marks
+
+The report also provides `ohlc_drawdown_upper_bound_quote` and
+`ohlc_pnl_lower_bound_quote`. For each held minute it combines the low/high mark
+P&L with the minimum/maximum cumulative funding state reached during that minute.
+This includes intermediate funding debits even if a later credit cancels them.
+For short positions the high mark is adverse; for long positions the low is adverse.
+The drawdown bound allows the favorable extreme to precede the adverse extreme
+within a minute, because OHLC does not identify their ordering. It also includes
+entry fees and the terminal realized exit.
+
+These bounds may overstate actual losses: price extrema and funding states need
+not occur together. They are conditional on the supplied marks and funding being
+complete, the fixed exposure remaining open, and the stated cost assumptions.
+They are not a margin requirement, safe deposit amount, or liquidation calculation.
+The previous close-only drawdown is retained for comparison. No new strategy or
+side is selected from these results.
+
+Use a new output name, such as `data/usdm-mark-path-bounds-aug01-07.json`, to keep
+the original report. Tests cover intraminute excursions invisible in closes,
+long/short signs, a debit followed by a credit in one minute, and invalid extrema.

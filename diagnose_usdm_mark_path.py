@@ -47,6 +47,9 @@ def mark_path(scenario, marks, events, fee_bps):
             rows.append(dict(timestamp_ms=t, kind=kind, pnl=str(pnl)))
         # Entry impact becomes visible at the first mark; this point charges entry fees only.
         append(entry, 'entry_fee_only', cash)
+        envelope_peak = max(Decimal(0), cash)
+        envelope_drawdown = max(Decimal(0), -cash)
+        envelope_minimum = cash
         cursor = entry
         funding = Decimal(0)
         index = 0
@@ -59,10 +62,23 @@ def mark_path(scenario, marks, events, fee_bps):
             close = Decimal(row['close'])
             if not close.is_finite() or close <= 0:
                 raise ValueError('Invalid close mark')
+            low, high = Decimal(row['low']), Decimal(row['high'])
+            if not all(v.is_finite() and v > 0 for v in (low, high)) or not low <= close <= high:
+                raise ValueError('Invalid mark high/low bounds')
             receipt = t + 59999
+            funding_states = [funding]
             while index < len(held) and held[index][0] <= receipt:
                 funding += held[index][1]
+                funding_states.append(funding)
                 index += 1
+            # Price extrema and settlement order within the bar are unknown.
+            # Their Cartesian product bounds every path consistent with these inputs.
+            price_pnls = [q * (low - fill), q * (high - fill)]
+            lower = cash + min(funding_states) + min(price_pnls)
+            upper = cash + max(funding_states) + max(price_pnls)
+            envelope_peak = max(envelope_peak, upper)
+            envelope_drawdown = max(envelope_drawdown, envelope_peak - lower)
+            envelope_minimum = min(envelope_minimum, lower)
             append(receipt, 'mark_close', cash + funding + q * (close - fill))
             cursor += 60000
         if cursor != exit_time or index != len(held):
@@ -72,9 +88,16 @@ def mark_path(scenario, marks, events, fee_bps):
         if net != Decimal(scenario['scenario_net_pnl']):
             raise ValueError('Terminal P&L does not reconcile with round trip')
         append(exit_time, 'realized_exit', net)
+        envelope_drawdown = max(envelope_drawdown, envelope_peak - net)
+        envelope_minimum = min(envelope_minimum, net)
+        if envelope_drawdown < drawdown:
+            raise ValueError('Envelope does not contain sampled drawdown')
         return dict(mark_minutes=(exit_time-entry)//60000,
                     max_sampled_drawdown_quote=str(drawdown),
                     minimum_sampled_pnl_quote=str(min(Decimal(r['pnl']) for r in rows)),
+                    ohlc_drawdown_upper_bound_quote=str(envelope_drawdown),
+                    ohlc_pnl_lower_bound_quote=str(envelope_minimum),
+                    bound_scope='Supplied mark extrema and funding; unknown intraminute ordering; not liquidation risk',
                     terminal_net_pnl=str(net), terminal_reconciled=True, path=rows)
 
 
@@ -98,7 +121,7 @@ def run(first, batch, spot, funding, marks_first, marks_batch, fee, impact):
                 cost_source=accounting['cost_source'], inputs_sha256=hashes,
                 runner_sha256=sha256(Path(__file__)), schedule_coverage_verified=False,
                 limitations=['Fixed hypothetical exposures, not a strategy or executable backtest.',
-                             'Drawdown uses minute closes plus entry-fee and realized-exit points; intraminute losses are not reconstructed.',
+                             'Sampled drawdown and a conservative OHLC upper bound are reported; the exact intraminute path is unknown.',
                              'No initial capital, percentage return, margin, liquidation or contract-filter model.',
                              'Funding completeness remains unverified; accounting uses supplied events only.'])
 
