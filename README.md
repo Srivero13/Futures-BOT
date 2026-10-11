@@ -287,3 +287,6 @@ day, acquires six more days and verifies raw-to-normalized conversion throughout
 
 [Mark-price P&L path](docs/USDM_MARK_PATH.md) measures sampled drawdown and reconciles
 fixed-exposure funding and trading costs against the round-trip accounting.
+
+[Daily futures attribution](docs/USDM_DAILY_ATTRIBUTION.md) reconciles UTC daily
+changes in a continuous hypothetical exposure and reports concentration by day.
