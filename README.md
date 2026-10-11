@@ -281,3 +281,6 @@ fills, fees and held-period funding while surfacing ambiguous settlement boundar
 
 [USD-M mark-price pilot](docs/USDM_MARKS.md) collects a separate complete day of
 valuation candles for future equity-path work; these are not executable prices.
+
+[Fixed-week mark-price batch](docs/USDM_MARK_BATCH.md) reuses the audited first
+day, acquires six more days and verifies raw-to-normalized conversion throughout.
