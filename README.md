@@ -284,3 +284,6 @@ valuation candles for future equity-path work; these are not executable prices.
 
 [Fixed-week mark-price batch](docs/USDM_MARK_BATCH.md) reuses the audited first
 day, acquires six more days and verifies raw-to-normalized conversion throughout.
+
+[Mark-price P&L path](docs/USDM_MARK_PATH.md) measures sampled drawdown and reconciles
+fixed-exposure funding and trading costs against the round-trip accounting.
