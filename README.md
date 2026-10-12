@@ -308,3 +308,6 @@ August development bundle without tuning or replacing the original rejection.
 
 [UM01 closure](docs/USDM_UM01_CLOSURE.md) combines both development runs with
 period and duplicate checks while retaining the rejected hypothesis.
+
+[UM02 fixed development protocol](docs/USDM_UM02_PROTOCOL.md) tests four-hour channel
+breakouts with causal timing and fixed cost stress; it cannot approve live trading.
