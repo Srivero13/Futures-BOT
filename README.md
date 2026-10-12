@@ -299,3 +299,6 @@ rule to audited-data accounting; the inspected week remains development-only.
 
 [UM01 evidence review](docs/USDM_EXPERIMENT_REVIEW.md) reconciles saved accounting
 and records failed development evidence without automatic model promotion.
+
+[Resumable USD-M data bundles](docs/USDM_BUNDLE.md) collect and re-audit bounded
+trade, mark and funding data ranges while preserving completed downloads.
