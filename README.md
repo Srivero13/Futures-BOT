@@ -296,3 +296,6 @@ P&L across offline trades and checks funding assignment and continuous drawdown.
 
 [UM01 causal futures experiment](docs/USDM_MOMENTUM.md) connects a fixed momentum
 rule to audited-data accounting; the inspected week remains development-only.
+
+[UM01 evidence review](docs/USDM_EXPERIMENT_REVIEW.md) reconciles saved accounting
+and records failed development evidence without automatic model promotion.
