@@ -305,3 +305,6 @@ trade, mark and funding data ranges while preserving completed downloads.
 
 [UM01 unchanged-rule extension](docs/USDM_BUNDLE_RESEARCH.md) evaluates the remaining
 August development bundle without tuning or replacing the original rejection.
+
+[UM01 closure](docs/USDM_UM01_CLOSURE.md) combines both development runs with
+period and duplicate checks while retaining the rejected hypothesis.
