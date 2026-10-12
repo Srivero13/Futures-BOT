@@ -302,3 +302,6 @@ and records failed development evidence without automatic model promotion.
 
 [Resumable USD-M data bundles](docs/USDM_BUNDLE.md) collect and re-audit bounded
 trade, mark and funding data ranges while preserving completed downloads.
+
+[UM01 unchanged-rule extension](docs/USDM_BUNDLE_RESEARCH.md) evaluates the remaining
+August development bundle without tuning or replacing the original rejection.
