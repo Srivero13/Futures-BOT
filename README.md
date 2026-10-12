@@ -290,3 +290,6 @@ fixed-exposure funding and trading costs against the round-trip accounting.
 
 [Daily futures attribution](docs/USDM_DAILY_ATTRIBUTION.md) reconciles UTC daily
 changes in a continuous hypothetical exposure and reports concentration by day.
+
+[Sequential futures accounting](docs/USDM_SEQUENCE_ACCOUNTING.md) carries realized
+P&L across offline trades and checks funding assignment and continuous drawdown.
