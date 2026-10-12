@@ -34,3 +34,7 @@ The data/accounting pipeline is reusable; a profitable strategy remains
 unestablished. Any later hypothesis needs its own written rationale, fixed
 protocol, development budget and untouched chronological evaluation. This review
 does not authorize live orders or establish account fees, margin or liquidation.
+
+The same command now accepts UM02 reports while preserving the experiment identity.
+UM02 additionally checks best-trade removal, exact fixed-cost stress accounting and
+exit-week totals. The UM01 closure command explicitly refuses mixed experiments.

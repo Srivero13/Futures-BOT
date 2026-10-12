@@ -1,4 +1,4 @@
-"""Reconcile UM01 evidence and record failure without enabling promotion."""
+"""Reconcile UM01/UM02 evidence and record failure without enabling promotion."""
 import argparse
 from decimal import Decimal,localcontext
 import json
@@ -13,8 +13,8 @@ FIELDS={'reference_price_pnl':'reference_price_pnl',
 
 
 def review(data):
-    if data.get('experiment')!='UM01' or data.get('approved') is not False or data.get('status')!='development_only':
-        raise ValueError('Expected an unapproved UM01 development report')
+    if data.get('experiment') not in ('UM01','UM02') or data.get('approved') is not False or data.get('status')!='development_only':
+        raise ValueError('Expected an unapproved UM01/UM02 development report')
     ledger=data['ledger'];summary=data['summary'];trades=ledger['trades']
     if ledger.get('approved') is not False or ledger.get('accounting_reconciled') is not True:
         raise ValueError('Unresolved ledger')
@@ -51,16 +51,34 @@ def review(data):
             if sides[side]['trades']!=summary[side+'_trades']:
                 raise ValueError('Side count mismatch')
         without_best=totals['net_pnl']-max(profits) if profits else None
-        if summary['net_pnl_excluding_best_trade']!=(str(without_best) if without_best is not None else None):
+        best_key='net_excluding_best_trade' if data['experiment']=='UM02' else 'net_pnl_excluding_best_trade'
+        if summary[best_key]!=(str(without_best) if without_best is not None else None):
             # Decimal textual precision may differ in otherwise identical reports.
-            if without_best is None or decimal_string(summary['net_pnl_excluding_best_trade'])!=without_best:
+            if without_best is None or decimal_string(summary[best_key])!=without_best:
                 raise ValueError('Best-trade sensitivity mismatch')
         gross_with_funding=totals['reference_price_pnl']+totals['funding_cashflow']
         reasons=[]
         if not profits: reasons.append('No completed trades')
         if totals['net_pnl']<=0: reasons.append('Nonpositive net P&L under stated assumptions')
         if gross_with_funding<=0: reasons.append('Nonpositive P&L even with zero fees and zero assumed price impact')
-        return dict(approved=False,experiment='UM01',
+        stress=None
+        if data['experiment']=='UM02':
+            protocol=data['protocol']
+            if protocol.get('fee_bps_per_side')!='5' or protocol.get('impact_bps_per_side')!='2':
+                raise ValueError('UM02 stress requires the fixed 5/2 bps protocol')
+            # Fixed quantity and reference prices: add 1 bps per side to impact.
+            # Fees change slightly because they are charged on impacted fills.
+            stress=totals['net_pnl']-totals['assumed_price_impact_cost']/2+totals['reference_price_pnl']*Decimal('0.00000005')
+            if stress!=decimal_string(summary['extra_1bps_impact_per_side_net_pnl']):
+                raise ValueError('Impact stress does not reconcile')
+            from research_usdm_bundle import weekly_summary
+            if weekly_summary(ledger)!=summary['exit_week_totals']:
+                raise ValueError('Exit-week attribution does not reconcile')
+            if without_best is not None and without_best<=0:
+                reasons.append('Nonpositive net P&L after removing best trade')
+            if stress<=0: reasons.append('Nonpositive net P&L with extra 1 bps impact per side')
+        return dict(approved=False,experiment=data['experiment'],
+            extra_1bps_impact_per_side_net_pnl=None if stress is None else str(stress),
             status='rejected_development' if reasons else 'requires_independent_validation',
             reasons=reasons,totals={k:str(v) for k,v in totals.items()},
             zero_fee_zero_impact_pnl=str(gross_with_funding),

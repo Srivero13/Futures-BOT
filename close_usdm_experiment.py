@@ -10,6 +10,8 @@ from review_usdm_experiment import review,FIELDS
 
 
 def combine(first,extension):
+    if any(d.get('experiment')!='UM01' for d in (first,extension)):
+        raise ValueError('UM01 closure cannot mix experiments')
     reports=(first,extension)
     windows=((date(2026,8,1),date(2026,8,8)),(date(2026,8,8),date(2026,9,1)))
     reviews=[];seen=set();profits=[];counts=0;boundary=0

@@ -35,3 +35,8 @@ class ClosureTests(unittest.TestCase):
         r=combine(self.report(date(2026,8,1)),self.report(date(2026,8,8)))
         self.assertEqual(r['closed_trades'],2);self.assertEqual(r['totals']['net_pnl'],'-2')
         self.assertFalse(r['approved'])
+
+    def test_mixed_experiment_closure_rejected(self):
+        first=self.report(date(2026,8,1));other=self.report(date(2026,8,8))
+        other['experiment']='UM02'
+        with self.assertRaises(ValueError): combine(first,other)

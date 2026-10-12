@@ -43,3 +43,35 @@ Budget: one configuration and one specified impact stress. A failed run is retai
 not inverted or retuned on August. A positive run still cannot establish robustness
 or justify live orders. There is no capital sizing, margin, liquidation, exchange
 filter, measured fill or historical funding-completeness model.
+
+## Development result and disposition
+
+The operator reported 93 completed trades on August 8–31: net -7.568642725852269345
+USDT, reference-price P&L +6.5715, fees 10.09510509285, impact 4.03804230 and
+funding -0.006995333002269345. Removing the best trade leaves -15.575028304121669345;
+extra 1 bps impact per side gives -9.587663547277269345. Two of four exit-week
+periods were positive. These are operator-reported figures; verify saved evidence:
+
+```bash
+python review_usdm_experiment.py \
+  --report data/usdm-UM02-development.json \
+  --output data/usdm-UM02-review.json
+```
+
+Disposition: rejected under the specified assumptions. Do not aggregate UM01 and
+UM02 as a portfolio or pick the better strategy from their shared development
+period and treat its result as validation. The reviewer keeps their identities
+separate, verifies exit-week totals, and recomputes the extra-impact scenario from
+fixed quantities and reference-price P&L, including its fee adjustment.
+
+### Research pause for this development sample
+
+The fixed UM02 experiment budget is exhausted. Do not launch more rule variants,
+parameter grids, side filters or GPU searches on this same August sample. Repeated
+selection on reused data cannot supply independent evidence of profitability.
+September remains reserved. Before further strategy tests, write a specific new
+market hypothesis, identify the information available at each decision timestamp,
+verify necessary data and execution costs, and fix a chronological development
+and untouched evaluation protocol with a finite experiment budget. A faster or
+larger model is not a substitute for this evidence. No successful strategy has
+been established by UM01 or UM02.
