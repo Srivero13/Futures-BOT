@@ -293,3 +293,6 @@ changes in a continuous hypothetical exposure and reports concentration by day.
 
 [Sequential futures accounting](docs/USDM_SEQUENCE_ACCOUNTING.md) carries realized
 P&L across offline trades and checks funding assignment and continuous drawdown.
+
+[UM01 causal futures experiment](docs/USDM_MOMENTUM.md) connects a fixed momentum
+rule to audited-data accounting; the inspected week remains development-only.
