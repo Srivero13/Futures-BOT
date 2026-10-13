@@ -129,3 +129,27 @@ neither report is added to the verified list for that month.
 
 Matching counts and baseline metrics are consistency checks, not proof of
 row-by-row identity: these reports do not contain individual evaluation rows.
+
+## Verify CUDA without repeating market experiments
+
+Run this in the existing GPU environment, using a new report filename:
+
+```bash
+.venv-gpu/bin/python -u check_cuda_training.py \
+  --output "data/cuda-check-$(date -u +%Y%m%dT%H%M%SZ).json"
+```
+
+This exercises the actual research MLP on CUDA for its fixed 40 epochs, using
+1,500 synthetic training rows and 500 separate evaluation rows. The known target
+is `3*x0 - 2*x1`. Success requires finite, correctly shaped predictions and MSE
+below 15% of the zero predictor's MSE, matching the existing CPU learning control.
+Missing CUDA, training errors or failure to recover the signal exit nonzero;
+there is no CPU fallback and no success report on those failures. Existing
+reports are refused. Epoch progress is printed by the training backend.
+
+The report records the GPU name, PyTorch/CUDA build versions and synchronized
+elapsed time. This is not a performance comparison, an endurance test, market
+validation or strategy approval. No data download, credentials, model export or
+orders are involved. CPU CI tests the command's failure and validation logic
+with mocks; only running this command on a CUDA machine verifies actual GPU
+execution. A passing result does not reopen rejected research experiments.
