@@ -153,3 +153,12 @@ validation or strategy approval. No data download, credentials, model export or
 orders are involved. CPU CI tests the command's failure and validation logic
 with mocks; only running this command on a CUDA machine verifies actual GPU
 execution. A passing result does not reopen rejected research experiments.
+
+The neural backend validates inputs before importing PyTorch or allocating GPU
+memory. It rejects nonpositive/noninteger epochs (including booleans), unsupported
+devices, empty training data, mismatched labels or feature widths, and nonfinite
+or non-real values. Labels must be one-dimensional; at least two training rows
+are required. Empty prediction arrays with the correct feature width remain
+valid. These checks prevent accidental untrained output from a zero-epoch call
+and invalid shapes reaching training. Valid experiment settings, normalization,
+seed, architecture and epoch count are unchanged.

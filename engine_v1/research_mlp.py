@@ -2,7 +2,35 @@
 import numpy as np
 
 
+def _validate_neural_inputs(train_x, train_y, targets, device, epochs):
+    if device not in ('cpu', 'cuda'):
+        raise ValueError('Neural device must be cpu or cuda')
+    if isinstance(epochs, (bool, np.bool_)) or not isinstance(epochs, (int, np.integer)) or epochs < 1:
+        raise ValueError('Neural epochs must be a positive integer')
+
+    def real_array(value, name):
+        array = np.asarray(value)
+        if array.dtype.kind not in 'fiu' or not np.isfinite(array).all():
+            raise ValueError(f'{name} must contain finite real numbers')
+        return array
+
+    train_x = real_array(train_x, 'Training features')
+    train_y = real_array(train_y, 'Training labels')
+    if train_x.ndim != 2 or train_x.shape[0] < 2 or train_x.shape[1] < 1:
+        raise ValueError('Training features require at least two rows and one column')
+    if train_y.ndim != 1 or len(train_y) != len(train_x):
+        raise ValueError('Training labels must be one-dimensional and match feature rows')
+    targets = [real_array(t, 'Prediction features') for t in targets]
+    if not targets:
+        raise ValueError('At least one prediction array is required')
+    if any(t.ndim != 2 or t.shape[1] != train_x.shape[1] for t in targets):
+        raise ValueError('Prediction features must match training feature columns')
+    return train_x, train_y, targets
+
+
 def fit_predict(train_x, train_y, targets, device='cuda', epochs=40):
+    # Validate before importing Torch or allocating GPU memory.
+    train_x, train_y, targets = _validate_neural_inputs(train_x, train_y, targets, device, epochs)
     import torch
     torch.set_num_threads(2)
     if device=='cuda' and not torch.cuda.is_available():
