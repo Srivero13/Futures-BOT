@@ -162,3 +162,9 @@ are required. Empty prediction arrays with the correct feature width remain
 valid. These checks prevent accidental untrained output from a zero-epoch call
 and invalid shapes reaching training. Valid experiment settings, normalization,
 seed, architecture and epoch count are unchanged.
+
+Normalization and float32 conversion are also checked before PyTorch is imported.
+Finite raw numbers can still overflow a mean, variance or normalized float32
+value. Such inputs now fail explicitly instead of reaching model computation.
+Training-only statistics and constant-column/constant-label scaling rules remain
+unchanged; prediction data never contributes to normalization statistics.

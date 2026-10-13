@@ -28,18 +28,39 @@ def _validate_neural_inputs(train_x, train_y, targets, device, epochs):
     return train_x, train_y, targets
 
 
+def _prepare_neural_arrays(train_x, train_y, targets):
+    # Keep the existing training-only scaling rules; reject unrepresentable data.
+    try:
+        with np.errstate(over='raise', invalid='raise', divide='raise'):
+            mean = train_x.mean(0)
+            scale = train_x.std(0)
+            scale[scale < 1e-12] = 1
+            ym = float(train_y.mean())
+            ys = max(float(train_y.std()), 1e-12)
+            if not (np.isfinite(mean).all() and np.isfinite(scale).all()
+                    and np.isfinite(ym) and np.isfinite(ys)):
+                raise ValueError('Non-finite neural normalization statistics')
+            arrays = [((train_x-mean)/scale).astype(np.float32),
+                      ((train_y-ym)/ys).astype(np.float32)]
+            arrays.extend(((t-mean)/scale).astype(np.float32) for t in targets)
+            if any(not np.isfinite(a).all() for a in arrays):
+                raise ValueError('Non-finite normalized neural arrays')
+    except FloatingPointError as error:
+        raise ValueError('Neural normalization exceeds finite numeric range') from error
+    return arrays[0], arrays[1], arrays[2:], ym, ys
+
+
 def fit_predict(train_x, train_y, targets, device='cuda', epochs=40):
     # Validate before importing Torch or allocating GPU memory.
     train_x, train_y, targets = _validate_neural_inputs(train_x, train_y, targets, device, epochs)
+    normalized_x, normalized_y, normalized_targets, ym, ys = _prepare_neural_arrays(train_x, train_y, targets)
     import torch
     torch.set_num_threads(2)
     if device=='cuda' and not torch.cuda.is_available():
         raise RuntimeError('CUDA unavailable; GPU research will not silently use CPU')
     torch.manual_seed(1729)
-    mean=train_x.mean(0);scale=train_x.std(0);scale[scale<1e-12]=1
-    ym=float(train_y.mean());ys=max(float(train_y.std()),1e-12)
-    x=torch.as_tensor((train_x-mean)/scale,dtype=torch.float32,device=device)
-    y=torch.as_tensor((train_y-ym)/ys,dtype=torch.float32,device=device).reshape(-1,1)
+    x=torch.as_tensor(normalized_x,dtype=torch.float32,device=device)
+    y=torch.as_tensor(normalized_y,dtype=torch.float32,device=device).reshape(-1,1)
     net=torch.nn.Sequential(torch.nn.Linear(x.shape[1],32),torch.nn.Tanh(),
         torch.nn.Linear(32,16),torch.nn.Tanh(),torch.nn.Linear(16,1)).to(device)
     opt=torch.optim.AdamW(net.parameters(),lr=.001,weight_decay=.01)
@@ -53,7 +74,7 @@ def fit_predict(train_x, train_y, targets, device='cuda', epochs=40):
             print(f'[mlp] device={device} epoch={epoch+1}/{epochs} train_mse_scaled={loss_total/len(x):.6f}',flush=True)
     net.eval()
     with torch.no_grad():
-        result=[net(torch.as_tensor((t-mean)/scale,dtype=torch.float32,device=device)).flatten().cpu().numpy().astype(float)*ys+ym for t in targets]
+        result=[net(torch.as_tensor(t,dtype=torch.float32,device=device)).flatten().cpu().numpy().astype(float)*ys+ym for t in normalized_targets]
     if any(not np.isfinite(p).all() for p in result):raise ValueError('Non-finite neural predictions')
     return result
 
