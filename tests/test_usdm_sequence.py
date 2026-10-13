@@ -50,3 +50,28 @@ class SequenceTests(unittest.TestCase):
         with self.assertRaises(ValueError): account_sequence(t,m,e,'5','2')
         t,m,e=self.inputs();t[0]['quantity']=1.0
         with self.assertRaises(ValueError): account_sequence(t,m,e,'5','2')
+
+    def test_ohlc_bound_carries_previous_trade_peak_without_summing(self):
+        trades, marks, _ = self.inputs()
+        for trade in trades:
+            trade.update(quantity='1', entry_reference='100', exit_reference='100')
+        marks[0]['high']='130'
+        marks[10]['low']='70'
+        result=account_sequence(trades,marks,[],'0','0')
+        self.assertEqual(Decimal(result['max_sampled_drawdown_quote']),Decimal('0'))
+        self.assertEqual(Decimal(result['ohlc_drawdown_upper_bound_quote']),Decimal('60'))
+        self.assertEqual(Decimal(result['ohlc_pnl_lower_bound_quote']),Decimal('-30'))
+        # Two identical 30-unit excursions must not be added as 60.
+        marks[10]['low']='100';marks[10]['high']='130'
+        result=account_sequence(trades,marks,[],'0','0')
+        self.assertEqual(Decimal(result['ohlc_drawdown_upper_bound_quote']),Decimal('30'))
+
+    def test_bounds_contain_sampled_path_for_both_directions_with_costs(self):
+        result=account_sequence(*self.inputs(),'5','2')
+        self.assertGreaterEqual(Decimal(result['ohlc_drawdown_upper_bound_quote']),
+                                Decimal(result['max_sampled_drawdown_quote']))
+        self.assertLessEqual(Decimal(result['ohlc_pnl_lower_bound_quote']),
+                             min(Decimal(p['cumulative_pnl']) for p in result['path']))
+        empty=account_sequence([],[],[],'5','2')
+        self.assertEqual(empty['ohlc_drawdown_upper_bound_quote'],'0')
+        self.assertEqual(empty['ohlc_pnl_lower_bound_quote'],'0')

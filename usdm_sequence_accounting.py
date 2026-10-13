@@ -51,6 +51,7 @@ def account_sequence(trades, marks, events, fee_bps, impact_bps):
     with localcontext() as ctx:
         ctx.prec=50
         realized=peak=drawdown=Decimal(0)
+        envelope_peak=envelope_minimum=envelope_drawdown=Decimal(0)
         fees=impact=funding=reference=Decimal(0)
         output=[];path=[];assigned=set()
         for trade in trades:
@@ -59,6 +60,13 @@ def account_sequence(trades, marks, events, fee_bps, impact_bps):
                                entry,exit_time,events,fee_bps,impact_bps)
             left,right=bisect_left(mark_times,entry),bisect_left(mark_times,exit_time)
             valued=mark_path(scenario,marks[left:right],events,fee_bps)
+            # Carry earlier peaks into later trades without summing drawdowns.
+            lower=realized+Decimal(valued['ohlc_pnl_lower_bound_quote'])
+            upper=realized+Decimal(valued['ohlc_pnl_upper_bound_quote'])
+            envelope_drawdown=max(envelope_drawdown,
+                envelope_peak-lower,Decimal(valued['ohlc_drawdown_upper_bound_quote']))
+            envelope_minimum=min(envelope_minimum,lower)
+            envelope_peak=max(envelope_peak,upper)
             held={t for t in event_times if event_exposure(entry,exit_time,t)=='held'}
             if held & assigned:
                 raise ValueError('Funding event assigned to multiple trades')
@@ -81,9 +89,13 @@ def account_sequence(trades, marks, events, fee_bps, impact_bps):
                     reference_price_pnl=str(reference),assumed_fees=str(fees),
                     assumed_price_impact_cost=str(impact),funding_cashflow=str(funding),
                     assigned_funding_events=len(assigned),unassigned_funding_events=len(events)-len(assigned),
-                    max_sampled_drawdown_quote=str(drawdown),accounting_reconciled=True,
+                    max_sampled_drawdown_quote=str(drawdown),
+                    ohlc_drawdown_upper_bound_quote=str(envelope_drawdown),
+                    ohlc_pnl_lower_bound_quote=str(envelope_minimum),
+                    bound_scope='Supplied mark extrema and funding; unknown intraminute ordering; not liquidation risk',
+                    accounting_reconciled=True,
                     trades=output,path=path,
                     limitations=['Accounting primitive: supplied reference prices and timestamps are not independently verified fills or causal signals.',
                                  'No capital, sizing, exchange filters, margin or liquidation model.',
-                                 'Drawdown is sampled, not a sum of per-trade drawdowns or an intraminute bound.',
+                                 'Sampled drawdown and a conservative OHLC bound are separate; neither is a sum of trade drawdowns or a liquidation calculation.',
                                  'Funding uses supplied events only; no source completeness guarantee.'])

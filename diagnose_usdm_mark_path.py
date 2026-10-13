@@ -90,6 +90,7 @@ def mark_path(scenario, marks, events, fee_bps):
         append(exit_time, 'realized_exit', net)
         envelope_drawdown = max(envelope_drawdown, envelope_peak - net)
         envelope_minimum = min(envelope_minimum, net)
+        envelope_peak = max(envelope_peak, net)
         if envelope_drawdown < drawdown:
             raise ValueError('Envelope does not contain sampled drawdown')
         return dict(mark_minutes=(exit_time-entry)//60000,
@@ -97,6 +98,7 @@ def mark_path(scenario, marks, events, fee_bps):
                     minimum_sampled_pnl_quote=str(min(Decimal(r['pnl']) for r in rows)),
                     ohlc_drawdown_upper_bound_quote=str(envelope_drawdown),
                     ohlc_pnl_lower_bound_quote=str(envelope_minimum),
+                    ohlc_pnl_upper_bound_quote=str(envelope_peak),
                     bound_scope='Supplied mark extrema and funding; unknown intraminute ordering; not liquidation risk',
                     terminal_net_pnl=str(net), terminal_reconciled=True, path=rows)
 

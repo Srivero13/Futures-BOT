@@ -36,3 +36,18 @@ identities/events, missing marks, settlement ambiguity and decimal input checks.
 These are accounting tests, not market performance results. Historical rule
 experiments must separately implement causal signal selection and retain all
 failed development trials before using untouched evaluation data.
+
+## Continuous conservative drawdown bound
+
+The sequence now retains `ohlc_drawdown_upper_bound_quote` and
+`ohlc_pnl_lower_bound_quote` alongside sampled drawdown. Each trade contributes
+its mark-path envelope, shifted by previously realized P&L. Earlier trade peaks
+carry into later trade lows; per-trade drawdowns are never added. Flat intervals
+carry the realized balance unchanged. The mark-path primitive also exposes
+`ohlc_pnl_upper_bound_quote`, including terminal realization, for this composition.
+
+These bounds use the supplied mark high/low values and funding states with
+unknown intraminute ordering. They are conservative accounting bounds, not
+observed drawdowns, initial-capital requirements or liquidation calculations.
+Existing net P&L and sampled drawdown calculations are unchanged. Saved reports
+remain unchanged; no rejected strategy needs rerunning for these additive fields.
