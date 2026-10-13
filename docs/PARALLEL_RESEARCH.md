@@ -168,3 +168,15 @@ Finite raw numbers can still overflow a mean, variance or normalized float32
 value. Such inputs now fail explicitly instead of reaching model computation.
 Training-only statistics and constant-column/constant-label scaling rules remain
 unchanged; prediction data never contributes to normalization statistics.
+
+Startup checks run before the CUDA preflight: the output path must be unused
+(including no dangling symlink), and all six audit files must exist and parse as
+JSON objects without nonfinite values. Invalid startup inputs neither initialize
+CUDA nor create the output directory. These are preliminary file checks, not a
+replacement for the workers' full alignment and provenance verification.
+
+Test startup rejection without GPU work or market experiments:
+
+```bash
+python -m unittest discover -s tests -p 'test_parallel_startup.py' -v
+```

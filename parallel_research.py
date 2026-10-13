@@ -18,16 +18,22 @@ def main():
     import math
     if not math.isfinite(a.worker_timeout_seconds) or a.worker_timeout_seconds<=0:
         raise ValueError('Worker timeout must be finite and positive')
+    # Reject invalid paths and unreadable reports before importing Torch or training.
+    if a.output_dir.exists() or a.output_dir.is_symlink():
+        raise ValueError('Use a new output directory')
+    for month in range(3,9):
+        path=a.audit_dir/f'ETHUSDT-2026-{month:02d}-alignment.json'
+        if not path.is_file():
+            raise ValueError(f'Missing monthly alignment report: {path.name}')
+        report,_=read_json(path)
+        if not isinstance(report,dict):
+            raise ValueError(f'Alignment report must be a JSON object: {path.name}')
     # Exercise real CUDA allocation, forward/backward and optimization before launch.
     from engine_v1.research_mlp import fit_predict
     import numpy as np
     import torch
     x=np.random.default_rng(1729).normal(size=(128,3))
     fit_predict(x,x[:,0],[x[:5]],epochs=1)
-    if a.output_dir.exists():raise ValueError('Use a new output directory')
-    for month in range(3,9):
-        if not (a.audit_dir/f'ETHUSDT-2026-{month:02d}-alignment.json').is_file():
-            raise ValueError('Missing monthly alignment report')
     a.output_dir.mkdir(parents=True)
     atomic_json(a.output_dir/'protocol.json',{'approved':False,'test_months':['2026-05','2026-06','2026-07','2026-08'],
         'cpu':'polynomial ridge alpha=10','gpu':'MLP 32/16, 40 epochs, seed 1729',
