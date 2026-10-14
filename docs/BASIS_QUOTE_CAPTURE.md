@@ -55,3 +55,32 @@ The USD-M connection uses `/public/ws/{symbol}@bookTicker`; spot uses
 `stream.binance.com:9443/ws/{symbol}@bookTicker`. Endpoint availability still must
 be tested from the operator's connection. Offline tests use synthetic quotes and
 mock connections; they do not certify exchange reachability.
+
+## Offline replay audit
+
+After a normally completed capture, verify the saved files without opening any
+network connections:
+
+```bash
+.venv/bin/python -u audit_basis_quotes.py \
+  --capture data/basis-quotes-TIMESTAMP \
+  --output data/basis-quotes-TIMESTAMP/replay-audit.json
+```
+
+Replace TIMESTAMP with the capture directory's timestamp. The output must be new.
+The audit checks part names, sizes and hashes, validates normalized quotes and
+per-feed ordering, reconstructs each pair from the latest saved quotes, and
+reconciles record counts. It checks input hashes again after replay. It reports
+receipt ages, receipt skew and how many pairs reuse each venue's quote from the
+previous pair. These reuse counts are not an effective independent sample size.
+
+The audit accepts only completed, error-free pilots. It does not certify source
+completeness, exchange synchronization, executable prices or profitability. It
+reuses recorder validators, so it is not an independent parser implementation.
+Unpaired updates have no saved pairing-attempt timestamp; their rejection reason
+cannot be independently reconstructed. A passing audit therefore validates saved
+pairs, not every decision the recorder made about omitted pairs.
+
+Synthetic tests cover correct replay and rejection of hash damage, inconsistent
+rehashed pair ages and embedded quotes, stale pairs, duplicate pairs, count
+mismatches and unexpected part paths. Operator captures are audited separately.
