@@ -2,12 +2,12 @@
 
 A CPU-based Binance spot research engine with two virtual accounts, Decimal accounting, a calibrated model interface, and a supervised WebSocket coordinator. **No real orders are sent. No profitable strategy has been demonstrated.**
 
-**Research status:** the current development-testing phase is closed with no
-candidate promoted. The every-minute breakout produced 162 simulated trades
-and -20.833 USDT summed across independently reset months. See the
-[phase closeout](docs/DEVELOPMENT_PHASE_CLOSEOUT.md) for the complete decision,
-evidence limitations and requirements for further research. The research
-scripts below remain available for reproducibility, not as recommended strategies.
+**Research status:** no candidate has been promoted. UM01 and UM02 were rejected
+under their stated development assumptions; the fixed spot–futures basis study
+has not established an executable edge. See the [current research checkpoint](docs/CURRENT_RESEARCH_STATUS.md)
+for verified software capabilities, research decisions and remaining requirements.
+The earlier [spot phase closeout](docs/DEVELOPMENT_PHASE_CLOSEOUT.md) is preserved.
+Research scripts remain available for reproducibility, not as recommended strategies.
 
 Patch 1.6.2 treats the final deadline-bounded socket read timeout as normal session completion, avoiding a false reconnect/error at the requested end time. Earlier read timeouts and continuous-session failures still trigger recovery.
 
