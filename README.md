@@ -25,6 +25,9 @@ Both linear and nonlinear models were evaluated on the same historical periods. 
 
 The [v1.5 benchmarks](reports/v1.5/RELEASE.md) remain archived. Their roughly 730× result applies to warmed compiled **linear batch inference**, not the nonlinear model or total-bot speed.
 
+A short [spot/USD-M quote-capture pilot](docs/BASIS_QUOTE_CAPTURE.md) records
+public best quotes with local receipt freshness checks. It is observation-only.
+
 ## Requirements
 
 | Component | Suggested minimum | Recommended for larger research |
