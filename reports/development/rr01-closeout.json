@@ -1,0 +1,82 @@
+{
+  "experiment_id": "RR-01",
+  "decision_date": "2026-10-03",
+  "timezone": "America/La_Paz",
+  "status": "closed_failed_development_screens",
+  "approved": false,
+  "evidence_origin": "Operator-supplied console summary; not an independent market-data reproduction",
+  "runner_commit": "f760f235b4d1b97a6c5f7ca98f1a5fea2a2f085b",
+  "local_report": "data/eth-relative-recovery-development.json",
+  "local_protocol": "data/eth-relative-recovery-development.protocol.json",
+  "development_interval": {
+    "start": "2026-03-01",
+    "end_exclusive": "2026-09-01"
+  },
+  "closed_trades": 23,
+  "positive_months": 2,
+  "folds": 6,
+  "net_pnl": "-5.523911658465759000000",
+  "fees": "4.599037759638759000000",
+  "spread_slippage_cost": "1.379711368827000000",
+  "derived_reference_price_gross_pnl_fixed_quantities": "0.454837470000000000000",
+  "derived_zero_fee_net_with_original_price_impact_fixed_quantities": "-0.924873898827000000000",
+  "net_pnl_excluding_best_trade": "-6.710571911284839000000",
+  "extra_1bps_per_side_net_pnl_fixed_quantity": "-5.983815402591012000000",
+  "failed_screens": [
+    "Fewer than 30 completed development trades",
+    "Fewer than four positive months",
+    "Not positive after removing best trade",
+    "Not positive with extra 1 bps slippage per side"
+  ],
+  "monthly": [
+    {
+      "month": "2026-03",
+      "closed_trades": 3,
+      "net_pnl": "1.075932176425288000000",
+      "fees": "0.601675858726712000000",
+      "spread_slippage_cost": "0.180502924848000000"
+    },
+    {
+      "month": "2026-04",
+      "closed_trades": 3,
+      "net_pnl": "-2.202280657786014000000",
+      "fees": "0.598390312292014000000",
+      "spread_slippage_cost": "0.179516965494000000"
+    },
+    {
+      "month": "2026-05",
+      "closed_trades": 3,
+      "net_pnl": "0.014353776644532000000",
+      "fees": "0.600611224455468000000",
+      "spread_slippage_cost": "0.180183438900000000"
+    },
+    {
+      "month": "2026-06",
+      "closed_trades": 7,
+      "net_pnl": "-1.924347868347866000000",
+      "fees": "1.399462813693866000000",
+      "spread_slippage_cost": "0.419838834654000000"
+    },
+    {
+      "month": "2026-07",
+      "closed_trades": 4,
+      "net_pnl": "-2.136917554697055000000",
+      "fees": "0.798654464290055000000",
+      "spread_slippage_cost": "0.239596240407000000"
+    },
+    {
+      "month": "2026-08",
+      "closed_trades": 3,
+      "net_pnl": "-0.350651530704644000000",
+      "fees": "0.600243086180644000000",
+      "spread_slippage_cost": "0.180072964524000000"
+    }
+  ],
+  "disposition": "Retire this fixed configuration without tuning, inversion or reserved-data evaluation",
+  "limitations": [
+    "Independent-month sums, not compounded portfolio returns.",
+    "Cost removal is arithmetic at unchanged selection, timing and quantities, not an executable alternative strategy.",
+    "No future-period evaluation, statistical significance claim, model promotion or real orders.",
+    "Documentation record only; this file does not enforce runtime approval."
+  ]
+}

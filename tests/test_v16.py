@@ -1,3 +1,4 @@
+from engine_v1.runtime_errors import LocalRuntimeError
 import json
 from pathlib import Path
 import tempfile
@@ -194,7 +195,7 @@ class V16Tests(unittest.TestCase):
         engine = Mock()
         profile = {'endpoints':{'quote':{'quote_deadline_ms':1000,'minimum_decision_spacing_ms':1000}}}
         with patch('engine_v1.stream.load_profile', return_value=profile), patch('engine_v1.stream.Portfolio', return_value=engine), patch('engine_v1.stream.fetch_rules', side_effect=OSError('network')), patch('engine_v1.stream.atomic_json', side_effect=OSError('disk')):
-            with self.assertRaises(OSError): stream(1,'ignored',False,config,self.root/'health.json')
+            with self.assertRaises(LocalRuntimeError): stream(1,'ignored',False,config,self.root/'health.json')
         engine.close.assert_called_once()
 
     def test_comparison_uses_common_accepted_rows(self):

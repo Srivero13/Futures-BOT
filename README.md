@@ -2,12 +2,12 @@
 
 A CPU-based Binance spot research engine with two virtual accounts, Decimal accounting, a calibrated model interface, and a supervised WebSocket coordinator. **No real orders are sent. No profitable strategy has been demonstrated.**
 
-**Research status:** the current development-testing phase is closed with no
-candidate promoted. The every-minute breakout produced 162 simulated trades
-and -20.833 USDT summed across independently reset months. See the
-[phase closeout](docs/DEVELOPMENT_PHASE_CLOSEOUT.md) for the complete decision,
-evidence limitations and requirements for further research. The research
-scripts below remain available for reproducibility, not as recommended strategies.
+**Research status:** no candidate has been promoted. UM01 and UM02 were rejected
+under their stated development assumptions; the fixed spot–futures basis study
+has not established an executable edge. See the [current research checkpoint](docs/CURRENT_RESEARCH_STATUS.md)
+for verified software capabilities, research decisions and remaining requirements.
+The earlier [spot phase closeout](docs/DEVELOPMENT_PHASE_CLOSEOUT.md) is preserved.
+Research scripts remain available for reproducibility, not as recommended strategies.
 
 Patch 1.6.2 treats the final deadline-bounded socket read timeout as normal session completion, avoiding a false reconnect/error at the requested end time. Earlier read timeouts and continuous-session failures still trigger recovery.
 
@@ -24,6 +24,9 @@ The release includes failure tests for missing dependencies, insufficient data, 
 Both linear and nonlinear models were evaluated on the same historical periods. On jointly accepted rows, neither beat the zero-return forecast. The five-second observer probe handled a proxy failure and exited cleanly; it did not establish live feed availability. No 30+ GB run or continuous unattended test has been completed.
 
 The [v1.5 benchmarks](reports/v1.5/RELEASE.md) remain archived. Their roughly 730× result applies to warmed compiled **linear batch inference**, not the nonlinear model or total-bot speed.
+
+A short [spot/USD-M quote-capture pilot](docs/BASIS_QUOTE_CAPTURE.md) records
+public best quotes with local receipt freshness checks. It is observation-only.
 
 ## Requirements
 
@@ -229,6 +232,10 @@ on identical delayed hourly targets, keeping the reserved period excluded.
 Read the [research evidence review](docs/RESEARCH_REVIEW.md) and build a local
 source-hashed dossier before starting another strategy variant.
 
+The parallel research coordinator now has [bounded worker supervision](docs/PARALLEL_RESEARCH.md#bounded-worker-supervision):
+concurrent failure detection, per-pair deadlines, heartbeat status and cleanup.
+This is an operational improvement, not a reason to rerun rejected strategies.
+
 The [fixed daily-breakout protocol](docs/DAILY_BREAKOUT_PROTOCOL.md) defines a
 separate four-hour holding hypothesis and failure screens before evaluation.
 Its sampling audit measures which qualifying minutes fall outside the hourly
@@ -237,3 +244,76 @@ grid without evaluating future returns or changing the rule.
 A separately recorded [every-minute breakout variant](docs/MINUTE_BREAKOUT_PROTOCOL.md)
 changes only sampling frequency and retains the original execution assumptions
 and development failure screens.
+
+Observe/paper runs now stop on local ledger or health-file failures instead of
+retrying them as network outages. See [stream failure handling](docs/STREAM_FAILURE_HANDLING.md).
+
+A fixed [development cost-feasibility audit](docs/COST_OPPORTUNITY_AUDIT.md)
+measures how often hourly-sampled ETH reference moves cover existing cost
+assumptions. It produces descriptive statistics, not trading signals or approval.
+
+[Relative recovery RR-01](docs/RELATIVE_RECOVERY_PROTOCOL.md) defines one fixed
+ETH/BTC contextual recovery hypothesis, with unchanged costs, a one-run budget,
+and the existing development failure screens. [RR-01 is now closed](docs/RR01_CLOSEOUT.md):
+23 trades, two profitable months, and a net loss; no candidate was promoted.
+
+[USD-M futures data pilot](docs/USDM_DATA_PILOT.md) acquires and validates one
+separate day of public futures candles. It does not enable futures trading or
+promote any rejected spot strategy.
+
+[Saved USD-M pilot audit](docs/USDM_PILOT_AUDIT.md) rechecks retained source files,
+conversion equality and timestamp alignment to the corresponding spot day.
+
+[Bounded USD-M batch](docs/USDM_BATCH.md) downloads and audits up to seven days,
+with per-day progress, preserved failure status and final integrity checks.
+
+[USD-M funding history](docs/USDM_FUNDING.md) collects bounded public settlement
+records with raw responses and provenance. Schedule completeness remains unverified.
+
+[Funding integrity audit](docs/USDM_FUNDING_AUDIT.md) verifies saved API pages and
+conversion, and reports alignment to an explicitly assumed eight-hour UTC grid.
+
+[Funding cash-flow diagnostic](docs/FUNDING_CASHFLOWS.md) calculates separate
+unit long/short funding components from audited records, without strategy P&L.
+
+[Fixed-week futures exposure attribution](docs/USDM_EXPOSURE.md) combines
+reference-price changes and funding for hypothetical unit exposures, before costs.
+
+[Fixed-time futures round trip](docs/USDM_ROUNDTRIP.md) integrates hypothetical
+fills, fees and held-period funding while surfacing ambiguous settlement boundaries.
+
+[USD-M mark-price pilot](docs/USDM_MARKS.md) collects a separate complete day of
+valuation candles for future equity-path work; these are not executable prices.
+
+[Fixed-week mark-price batch](docs/USDM_MARK_BATCH.md) reuses the audited first
+day, acquires six more days and verifies raw-to-normalized conversion throughout.
+
+[Mark-price P&L path](docs/USDM_MARK_PATH.md) measures sampled drawdown and reconciles
+fixed-exposure funding and trading costs against the round-trip accounting.
+
+[Daily futures attribution](docs/USDM_DAILY_ATTRIBUTION.md) reconciles UTC daily
+changes in a continuous hypothetical exposure and reports concentration by day.
+
+[Sequential futures accounting](docs/USDM_SEQUENCE_ACCOUNTING.md) carries realized
+P&L across offline trades and checks funding assignment and continuous drawdown.
+
+[UM01 causal futures experiment](docs/USDM_MOMENTUM.md) connects a fixed momentum
+rule to audited-data accounting; the inspected week remains development-only.
+
+[UM01 evidence review](docs/USDM_EXPERIMENT_REVIEW.md) reconciles saved accounting
+and records failed development evidence without automatic model promotion.
+
+[Resumable USD-M data bundles](docs/USDM_BUNDLE.md) collect and re-audit bounded
+trade, mark and funding data ranges while preserving completed downloads.
+
+[UM01 unchanged-rule extension](docs/USDM_BUNDLE_RESEARCH.md) evaluates the remaining
+August development bundle without tuning or replacing the original rejection.
+
+[UM01 closure](docs/USDM_UM01_CLOSURE.md) combines both development runs with
+period and duplicate checks while retaining the rejected hypothesis.
+
+[UM02 fixed development protocol](docs/USDM_UM02_PROTOCOL.md) tests four-hour channel
+breakouts with causal timing and fixed cost stress; it cannot approve live trading.
+
+[Continuous integration](docs/CI.md) runs offline startup checks and the full CPU
+regression suite on pushes and pull requests, preserving diagnostic logs.

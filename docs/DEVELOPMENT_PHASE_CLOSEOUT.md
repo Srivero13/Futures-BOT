@@ -81,3 +81,9 @@ must be explicit and logged; no command in this closeout accesses it.
 Do not equate completed software tasks with a probability of profitability or
 promise a completion date. The tested pipeline is useful research infrastructure;
 finding a defensible economic advantage remains an unresolved research problem.
+
+## Subsequent fixed experiment
+
+[RR-01 closed on October 3, 2026](RR01_CLOSEOUT.md) after failing all four
+development screens. It was a separate fixed hypothesis, and does not alter
+the decisions or evidence origin in this earlier closeout.

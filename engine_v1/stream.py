@@ -16,6 +16,7 @@ from .fast import forecast,cost_gate
 from .nonlinear import load_model
 from .progress import ProgressReporter
 from .operations import atomic_json,process_lock
+from .runtime_errors import local_operation
 ROOT=Path(__file__).resolve().parent.parent
 
 
@@ -130,7 +131,7 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
     def health(running=True,force_progress=False):
         now=int(time.time()*1000)
         ages={s:now-q.timestamp_ms for s,q in feed.quotes.items()}
-        atomic_json(health_path,{'version':'1.6.2','running':running,'observe_only':observe,'timestamp_ms':now,
+        local_operation('Health report write',atomic_json,health_path,{'version':'1.6.2','running':running,'observe_only':observe,'timestamp_ms':now,
             'messages':events,'reconnects':reconnects,'errors':dict(errors),'clock_ok':clock_ok,
             'connection_state':connection_state if running else 'stopped',
             'quote_age_ms':ages,'warm_candles':{s:len(r) for s,r in feed.rows.items()},'entry_gates':gates,
@@ -198,12 +199,12 @@ def stream(duration=60,profile_path=None,observe=True,config_path=None,health_pa
                                 if gate=='ready':
                                     if s not in features:features[s]=forecast(m,feature_matrix(list(feed.rows[s]))[-1])
                                     decisions[a['id']]=cost_gate(features[s],break_even_bps(feed.quotes[s],cfg['risk']['fee_bps'],cfg['risk']['slip_bps']))
-                            outputs=engine.process(feed.quotes,decisions,now,event_id=f'ws:{time.time_ns()}',rules=rules,
+                            outputs=local_operation('Paper ledger transaction',engine.process,feed.quotes,decisions,now,event_id=f'ws:{time.time_ns()}',rules=rules,
                                 cooldown_ms=cfg['cooldown_ms'],max_entries_day=cfg['max_entries_day'],allow_entries=not(paused or flatten) and clock_ok,force_exit=flatten)
                             costs.append((time.perf_counter_ns()-t0)/1e6);last_decision=mono
                             for output in outputs:
                                 if output['action'] in ('BUY','SELL'):print(json.dumps(output),flush=True)
-                            if mono-last_prune>=300:engine.prune(now);last_prune=mono
+                            if mono-last_prune>=300:local_operation('Paper ledger pruning',engine.prune,now);last_prune=mono
                 except (OSError,ValueError,KeyError,TypeError,websocket.WebSocketException) as exc:
                     errors[type(exc).__name__]+=1;reconnects+=1;failures+=1;feed.reset_quotes();features.clear()
                     gates={a['id']:'feed_disconnected' for a in accounts}

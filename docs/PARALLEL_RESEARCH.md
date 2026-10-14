@@ -51,10 +51,132 @@ RMSE against zero, Spearman correlation and calibration-defined buckets.
 Nothing here estimates executable P&L, saves a deployable model, selects a winner
 or sends orders. Small datasets may finish quickly and underutilize the GPU.
 
-## Learning controls
+## Bounded worker supervision
+
+The launcher checks both workers concurrently. A failed worker stops its peer
+and prevents later folds from starting; it no longer waits indefinitely on the
+first worker before noticing that the second failed.
+
+`--worker-timeout-seconds 3600` is the default deadline for each monthly worker
+pair. It excludes the initial CUDA preflight. Change this operational limit
+explicitly for a justified longer job; it does not change epochs or model rules.
+
+Each pair writes `05-workers.json` through `08-workers.json` alongside its logs.
+States include `starting`, `running`, `succeeded`, `failed`, `timed_out` and
+`interrupted`. Status contains the last heartbeat, elapsed time, child PIDs,
+return codes and log paths. A heartbeat is printed every five seconds while
+workers run. Full command arguments and environment variables are not copied
+into status files. A successful process exit is not a model approval or proof
+that a report is economically useful.
+
+On Ubuntu/POSIX, children run in separate process groups. Ctrl+C or SIGTERM,
+worker failure, deadline expiry and supervisor exceptions trigger cleanup.
+Cleanup first requests termination, waits up to five seconds across the pair,
+then force-stops remaining groups and reaps direct children with bounded waits.
+Windows cleanup targets direct children only; descendant cleanup is not certified.
+An OS crash, SIGKILL, power loss or uninterruptible kernel task cannot be made
+recoverable by this Python supervisor. A stale `running` status is not proof
+that a worker still exists. There is no automatic retry or checkpoint resume.
+
+Inspect a pair after a previously authorized run:
+
+```bash
+python -m json.tool data/YOUR-PARALLEL-RUN/05-workers.json
+```
+
+Verify supervision without CUDA, market data, downloads or training:
+
+```bash
+python -m unittest discover -s tests -p 'test_process_supervision.py' -v
+```
+
+These tests launch short local subprocess fixtures and intentionally exercise
+failure and timeout paths. They do not rerun the closed strategy experiments.
+
+## Model learning controls
 
 `python -m unittest discover -s tests -p test_parallel_learning.py -v` checks
 raw flow/candle construction, timing and exact labels with a known synthetic
 signal, a shuffled-label negative control, nonlinear polynomial recovery, and
 (optional PyTorch) neural learning on CPU. Real-world profitability does not
 follow from passing these controls.
+
+### Report completion checks
+
+A successful worker exit is followed by report validation before another month
+starts. The coordinator requires both reports and their saved protocols, the
+requested backend/symbol/date boundaries, matching audit fingerprints, finite
+metrics, valid paired row counts, and agreement between summaries and rankings.
+
+`batch-status.json` records `running`, `failed`, `interrupted`, or `completed`.
+Only eight validated reports allow completion. Report and protocol SHA-256
+fingerprints are rechecked before publishing that status. This checks artifact
+consistency; it does not reproduce forecasts or certify profitability. Abrupt
+power loss or an uncatchable termination can leave a stale running status.
+
+These checks apply to new runs; existing research reports are unchanged. There
+is no need to rerun rejected experiments. Test the completion checks without CUDA:
+
+```bash
+python -m unittest discover -s tests -p 'test_research_artifacts.py' -v
+```
+
+CPU and GPU artifacts are also checked as a pair. Their shared protocols
+(including input and code hashes), train/calibration/test row counts, and
+zero-forecast RMSE must agree. Only backend identity and runtime metadata may
+differ. A mismatched pair fails the batch before the following month starts;
+neither report is added to the verified list for that month.
+
+Matching counts and baseline metrics are consistency checks, not proof of
+row-by-row identity: these reports do not contain individual evaluation rows.
+
+## Verify CUDA without repeating market experiments
+
+Run this in the existing GPU environment, using a new report filename:
+
+```bash
+.venv-gpu/bin/python -u check_cuda_training.py \
+  --output "data/cuda-check-$(date -u +%Y%m%dT%H%M%SZ).json"
+```
+
+This exercises the actual research MLP on CUDA for its fixed 40 epochs, using
+1,500 synthetic training rows and 500 separate evaluation rows. The known target
+is `3*x0 - 2*x1`. Success requires finite, correctly shaped predictions and MSE
+below 15% of the zero predictor's MSE, matching the existing CPU learning control.
+Missing CUDA, training errors or failure to recover the signal exit nonzero;
+there is no CPU fallback and no success report on those failures. Existing
+reports are refused. Epoch progress is printed by the training backend.
+
+The report records the GPU name, PyTorch/CUDA build versions and synchronized
+elapsed time. This is not a performance comparison, an endurance test, market
+validation or strategy approval. No data download, credentials, model export or
+orders are involved. CPU CI tests the command's failure and validation logic
+with mocks; only running this command on a CUDA machine verifies actual GPU
+execution. A passing result does not reopen rejected research experiments.
+
+The neural backend validates inputs before importing PyTorch or allocating GPU
+memory. It rejects nonpositive/noninteger epochs (including booleans), unsupported
+devices, empty training data, mismatched labels or feature widths, and nonfinite
+or non-real values. Labels must be one-dimensional; at least two training rows
+are required. Empty prediction arrays with the correct feature width remain
+valid. These checks prevent accidental untrained output from a zero-epoch call
+and invalid shapes reaching training. Valid experiment settings, normalization,
+seed, architecture and epoch count are unchanged.
+
+Normalization and float32 conversion are also checked before PyTorch is imported.
+Finite raw numbers can still overflow a mean, variance or normalized float32
+value. Such inputs now fail explicitly instead of reaching model computation.
+Training-only statistics and constant-column/constant-label scaling rules remain
+unchanged; prediction data never contributes to normalization statistics.
+
+Startup checks run before the CUDA preflight: the output path must be unused
+(including no dangling symlink), and all six audit files must exist and parse as
+JSON objects without nonfinite values. Invalid startup inputs neither initialize
+CUDA nor create the output directory. These are preliminary file checks, not a
+replacement for the workers' full alignment and provenance verification.
+
+Test startup rejection without GPU work or market experiments:
+
+```bash
+python -m unittest discover -s tests -p 'test_parallel_startup.py' -v
+```
