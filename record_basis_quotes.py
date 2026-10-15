@@ -12,7 +12,8 @@ import time
 import websocket
 from engine_v1.dataset import sha256
 from engine_v1.operations import atomic_json
-from record_market import Writer, StorageLimit
+from record_market import StorageLimit
+from basis_quote_writer import QuoteWriter as Writer
 
 
 def quote(raw, venue, symbol, mono, wall):
@@ -82,19 +83,24 @@ def capture(symbol,seconds,root,max_mib):
           'usdm':f'wss://fstream.binance.com/public/ws/{symbol.lower()}@bookTicker'}
     queue=Queue(maxsize=4096);failures=Queue();stop=Event();threads=[]
     writer=Writer(root,max_mib*1024**2)
+    queue_high_water=0;max_queue_wait_ns=0
     counts=Counter();latest={};reason='duration';started=time.monotonic();last_progress=started
     atomic_json(root/'protocol.json',dict(approved=False,observe_only=True,symbol=symbol,
         endpoints=urls,seconds=seconds,max_mib=max_mib,max_receipt_age_ms=250,
-        runner_sha256=sha256(Path(__file__)),writer_sha256=sha256(Path(__file__).with_name('record_market.py'))))
+        runner_sha256=sha256(Path(__file__)),writer_sha256=sha256(Path(__file__).with_name('basis_quote_writer.py')),
+        writer_base_sha256=sha256(Path(__file__).with_name('record_market.py')),
+        queue_capacity=4096,disk_probe_bytes=Writer.probe_bytes))
     try:
         for venue,url in urls.items():
             t=Thread(target=feed,args=(venue,url,symbol,queue,stop,failures),daemon=True)
             threads.append(t);t.start()
         while time.monotonic()-started<seconds and not stop.is_set():
+            queue_high_water=max(queue_high_water,queue.qsize())
             try: q=queue.get(timeout=min(.2,max(.001,seconds-(time.monotonic()-started))))
             except Empty: q=None
             if q is not None:
                 if stop.is_set(): break
+                max_queue_wait_ns=max(max_queue_wait_ns,time.monotonic_ns()-q['receipt_monotonic_ns'])
                 writer.write(q);counts[q['venue']+'_quotes']+=1;latest[q['venue']]=q
                 p=pair(latest,time.monotonic_ns())
                 if p is not None:
@@ -102,7 +108,7 @@ def capture(symbol,seconds,root,max_mib):
                 else: counts['unpaired_updates']+=1
             if time.monotonic()-last_progress>=5:
                 writer.flush();last_progress=time.monotonic()
-                print(f'[basis-record] elapsed={last_progress-started:.0f}/{seconds}s counts={dict(counts)} bytes={writer.total}',flush=True)
+                print(f'[basis-record] elapsed={last_progress-started:.0f}/{seconds}s counts={dict(counts)} bytes={writer.total} queued={queue.qsize()}',flush=True)
         if stop.is_set(): reason='feed_failure'
     except StorageLimit as error: reason=str(error)
     except KeyboardInterrupt: reason='interrupted'
@@ -120,6 +126,9 @@ def capture(symbol,seconds,root,max_mib):
         capture_completed=reason=='duration' and counts['receipt_pairs']>0,
         elapsed_seconds=time.monotonic()-started,counts=dict(counts),errors=errors,
         event_bytes=writer.total,parts=writer.parts,workers_stopped=not alive,
+        queue_capacity=4096,queue_high_water_observed=queue_high_water,
+        max_consumed_queue_wait_ms=max_queue_wait_ns/1e6,
+        queue_overflow=any(e[1]=='Full' for e in errors),
         limitations=['Receipt-time pairs are not exchange-synchronized quotes or guaranteed fills.',
           'Spot bookTicker has no source event timestamp; socket buffering and asymmetric latency remain unknown.',
           'Pairs reuse the latest opposite quote and are not independent observations.',

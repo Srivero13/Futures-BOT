@@ -84,3 +84,25 @@ pairs, not every decision the recorder made about omitted pairs.
 Synthetic tests cover correct replay and rejection of hash damage, inconsistent
 rehashed pair ages and embedded quotes, stale pairs, duplicate pairs, count
 mismatches and unexpected part paths. Operator captures are audited separately.
+
+## Queue pressure and writer overhead
+
+`Full` in a feed error means the shared 4096-record queue overflowed. It does not
+identify a network outage. The capture fails and the chained audit is skipped;
+keep the partial folder and use a new folder for a retry. The queue limit and
+250 ms freshness rule are unchanged; no quotes are silently dropped to recover.
+
+The quote-specific writer probes free disk space before its first write and
+before another 1 MiB would be written since the previous probe. It subtracts all
+intervening bytes from the cached free-space value and probes again near the
+1 GiB reserve. This removes a filesystem probe from every record. Other processes
+can consume disk space between probes; this reserve is not a disk reservation.
+Write errors still stop the capture. Rotation, hashes and per-record byte limits
+remain in effect. The existing market recorder is unchanged.
+
+Progress includes current queue occupancy. The summary includes the observed
+queue high-water mark (sampling can miss the actual peak), maximum queue wait for
+consumed quotes, and an explicit overflow flag. Queue wait is measured from the
+application receipt timestamp and does not measure network latency. A synthetic
+10,000-record test checks preservation, rotation, hashes and reduced probe calls;
+it does not certify live throughput on the operator's machine.
