@@ -35,3 +35,28 @@ inventory or borrowing. A positive subtotal never advances a strategy by itself.
 For a real hypothesis, supply supportable prices/rates and resolve these omitted
 components before proposing a prospective evaluation. Do not reinterpret the
 flat control as a replay of the basis pilot or extrapolate its P&L to a portfolio.
+
+## Applying a scenario to recorded quotes
+
+`diagnose_basis_costs.py` reruns the raw capture audit and the existing fixed
+anchor selection, then applies this accounting to the same complete anchors at
+all four horizons. It saves the unchanged reference diagnostic alongside the
+cost scenario and checks input hashes after analysis. It never chooses anchors
+based on their prices, cost or direction. A callback added to the anchor runner
+exposes complete quote pairs without changing default selection or output.
+
+```bash
+.venv/bin/python -u diagnose_basis_costs.py \
+  --capture CAPTURE --spot-fee-bps 10 --futures-fee-bps 5 \
+  --slippage-bps 0 --output CAPTURE/basis-cost-scenario.json
+```
+
+All three rate flags are mandatory decimal values. The example is an explicit
+hypothetical sensitivity, not verified account pricing. Zero assumed slippage
+is an optimistic scenario, not a claim of zero real slippage. Funding and
+financing remain excluded. Do not label the subtotal actual net profit. Exact
+fees depend on the four assumed fill prices; the flat-price -30 bps control is
+not mechanically subtracted from every recorded observation.
+
+This uses already collected pilot data and does not reopen the closed study,
+select a strategy or require further capture. Outputs must be new files.

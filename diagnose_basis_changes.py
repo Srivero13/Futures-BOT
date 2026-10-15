@@ -24,7 +24,7 @@ def reference_changes(entry, exit):
                 'long_spot_short_futures': (sb1-sa0+fb0-fa1)*scale}
 
 
-def analyze(records):
+def analyze(records, *, on_complete=None):
     anchors=[];active=None;next_anchor=None;last_time=-1;missed=0
     for record in records:
         if record['kind'] != 'receipt_pair': continue
@@ -52,6 +52,8 @@ def analyze(records):
     for h in HORIZONS:
         sides={s:[] for s in ('long_futures_short_spot','long_spot_short_futures')}
         for a in complete:
+            if on_complete is not None:
+                on_complete(h, a['entry'], a['labels'][h])
             for side,value in reference_changes(a['entry'],a['labels'][h]).items():
                 sides[side].append(value)
         result[str(h)]={s:dict(count=len(v),
