@@ -106,3 +106,29 @@ consumed quotes, and an explicit overflow flag. Queue wait is measured from the
 application receipt timestamp and does not measure network latency. A synthetic
 10,000-record test checks preservation, rotation, hashes and reduced probe calls;
 it does not certify live throughput on the operator's machine.
+
+## Descriptive bid/ask basis
+
+Run `describe_basis_quotes.py --capture CAPTURE --output CAPTURE/basis-description.json`
+after capture. It reruns the integrity/replay audit before reading the saved pairs
+and checks source hashes again afterward. Output paths must be new.
+
+Sampling is fixed: first valid recorded pair in each one-second bucket relative
+to the first pair. Subsequent pairs in that bucket are ignored, without looking
+at their prices. Missing buckets are not filled. This limits event-rate weighting
+but does not establish statistical independence. Coverage spans first to last
+pair only; it does not measure start/end periods without valid pairs.
+
+Metrics are 10,000 times natural log ratios:
+
+- Midpoint basis: futures midpoint / spot midpoint.
+- Lower bid/ask basis: futures bid / spot ask.
+- Upper bid/ask basis: futures ask / spot bid.
+- Each market's spread: ask / bid.
+
+Means and nearest-rank 5th, 50th and 95th percentiles summarize sampled levels.
+Lower and upper basis are price observations for different sides, not profits
+from an opening and closing trade. Even positive differences do not establish
+executable arbitrage: asynchronous receipts, fills, depth, fees, funding,
+borrowing, inventory and legging remain unmodeled. No thresholds are fitted,
+trades selected or model approved. This pilot is descriptive development data.
