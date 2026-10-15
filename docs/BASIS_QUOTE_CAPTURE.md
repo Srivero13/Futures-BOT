@@ -132,3 +132,31 @@ from an opening and closing trade. Even positive differences do not establish
 executable arbitrage: asynchronous receipts, fills, depth, fees, funding,
 borrowing, inventory and legging remain unmodeled. No thresholds are fitted,
 trades selected or model approved. This pilot is descriptive development data.
+
+## Fixed-horizon quote changes
+
+`diagnose_basis_changes.py --capture CAPTURE --output CAPTURE/basis-changes.json`
+reruns the audit, streams the saved pairs and verifies input hashes again.
+Anchors lie on a 60-second grid starting at the first valid pair. An anchor uses
+the first available pair within 250 ms of its grid time, only after the previous
+anchor is resolved. Labels use the first pair at or after actual entry plus
+5, 15, 30 or 60 seconds, with a maximum 250 ms lateness. No missing quote is
+filled in. Only anchors complete at all four horizons enter any horizon summary.
+The tail and late/incomplete anchors are excluded and counted. A five-minute
+capture gives only a handful of observations, not strategy evidence.
+
+For equal hypothetical one-ETH legs, quote-reference changes are:
+
+- Long futures / short spot: futures exit bid minus entry ask, plus spot entry
+  bid minus exit ask.
+- Long spot / short futures: spot exit bid minus entry ask, plus futures entry
+  bid minus exit ask.
+
+Values are divided by entry spot midpoint and multiplied by 10,000. They are
+arithmetic basis points of that reference notional, not log-bps or return on
+portfolio capital. An unchanged discount loses both legs' spreads. No fee,
+slippage, funding, borrow, inventory, legging, margin or liquidation model is
+included. Short spot is hypothetical and requires inventory or borrowing in
+practice. These asynchronous quotes are not guaranteed fills. Both directions
+and all predefined horizons are reported; do not select a strategy from this
+pilot or treat positive reference changes as profitability approval.
