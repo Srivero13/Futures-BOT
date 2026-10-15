@@ -1,0 +1,17 @@
+{
+  "quantity_eth": "1",
+  "direction": "long_futures_short_spot",
+  "cost_source": "Synthetic flat-price control: hypothetical 10 bps spot and 5 bps futures fees; not verified account rates",
+  "spot": {
+    "fee_bps_per_execution": "10",
+    "slippage_bps_per_execution": "0",
+    "entry": {"bid": "100", "ask": "100"},
+    "exit": {"bid": "100", "ask": "100"}
+  },
+  "futures": {
+    "fee_bps_per_execution": "5",
+    "slippage_bps_per_execution": "0",
+    "entry": {"bid": "100", "ask": "100"},
+    "exit": {"bid": "100", "ask": "100"}
+  }
+}
