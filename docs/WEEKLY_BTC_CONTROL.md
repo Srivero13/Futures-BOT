@@ -107,3 +107,36 @@ lot-size rounding is not modeled. Zero cash yield is assumed. Passing a screen
 still does not approve trading. The operator's data are not available in CI;
 causal fixtures test delayed open fills, missing-minute rejection, no unnecessary
 rebalance, affordable stress sizing and component reconciliation.
+
+## Minute reference risk replay
+
+`diagnose_weekly_btc_risk.py` reads the existing report and its recorded source
+paths. It verifies source hashes and metadata, rebuilds the unchanged weekly
+schedule and all three accounting scenarios, and rejects any saved result that
+differs. It then streams every development minute for base, stress and buy-and-hold.
+It never accesses September or changes signal thresholds.
+
+```bash
+.venv/bin/python -u diagnose_weekly_btc_risk.py \
+  --report data/weekly-btc-WBC01-development.json \
+  --output data/weekly-btc-WBC01-risk.json
+```
+
+Sampled drawdown uses minute opens/closes plus equity immediately before and
+after transactions. The OHLC upper bound additionally permits each minute's high
+to precede its low. Both carry the portfolio peak across trades. Entry costs apply
+before that minute's extrema; an exit at the open excludes subsequent extrema for
+the exited position. The initial equity is 1,000 USDT and the entry budget remains
+100 USDT. Terminal cash must reconcile to the saved accounting. Output paths must
+be new; source reports are not modified.
+
+These are reference-price risk measurements, not executable liquidation equity.
+The upper bound covers supplied candles and assumed fills only. Less exposure and
+more idle cash can reduce drawdown without establishing superior risk-adjusted
+performance. No strategy promotion follows from this diagnostic.
+
+Operator-reported development results: 37 trades, base net 48.2748 USDT, stress
+47.5252, buy-and-hold 78.5453, and base excluding the best trade 7.1567. The original
+screen passed. Base period changes were +49.0831 in 2024, +5.5699 in 2025 and
+-6.3782 in the partial 2026 period; this concentration warrants caution. These
+figures were supplied by the operator, not independently run against local data.

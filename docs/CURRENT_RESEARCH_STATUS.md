@@ -57,11 +57,13 @@ The [live basis pilot review](BASIS_QUOTE_PILOT_REVIEW.md) preserves all eight
 predefined direction/horizon results. Its evidence is operator-reported and
 descriptive; further short-capture repetition is not an active task.
 
-## New protocol, not a result
+## WBC01 development screen and risk replay
 
 [WBC01](WEEKLY_BTC_CONTROL.md) defines one weekly BTC spot momentum control using
 previously used development data. It is motivated by primary historical research
 and addresses a different holding horizon, with explicit costs and baselines.
-The fixed implementation and causal/accounting fixtures are available; no market
-result, candidate or promotion exists yet.
+The operator reports 37 trades and a passed original development screen: base net
+48.2748 USDT versus 78.5453 for buy-and-hold. Profit is concentrated in 2024 and
+the partial 2026 result is negative. Minute reference risk replay is now available;
+independent validation and promotion have not occurred.
 It does not replace the original scalping goal with a claim of weekly success.
