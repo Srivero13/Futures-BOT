@@ -76,6 +76,34 @@ and drawdowns without cherry-picking. Full independent evaluation criteria and
 an actually uninspected chronological period must be documented separately
 before any such data are accessed. No September data is authorized by this file.
 
-Current deliverable: protocol frozen before WBC01 calculations. Implementation
-and causal/accounting tests remain to be built. No market results have been run,
+Protocol was frozen before implementation and WBC01 calculations. No market results have been run here,
 no downloads started and no live trading path enabled.
+
+## Implementation and operator run
+
+`research_weekly_btc.py` now implements this fixed protocol. Its protocol hash is
+pinned: editing the JSON cannot silently change the experiment. Provenance checks
+require Binance BTCUSDT one-minute shards with matching local hashes and ranges
+before the reserve. Every minute from 2023-12-31 23:59 UTC through the terminal
+reference must exist exactly once. The input files remain previously used
+research data; downloaded warmup does not make the evaluation independent.
+
+```bash
+.venv/bin/python download_v15_data.py --source binance --symbol BTCUSDT \
+  --start 2023-12-01 --end 2024-01-01 --root data/market-expanded &&
+.venv/bin/python -u research_weekly_btc.py \
+  --files data/market-expanded/binance-BTCUSDT-2023-12.csv \
+    data/market-expanded/binance-BTCUSDT-2024-*.csv \
+    data/market-expanded/binance-BTCUSDT-2025-*.csv \
+    data/market-expanded/binance-BTCUSDT-2026-0[1-8].csv \
+  --output data/weekly-btc-WBC01-development.json
+```
+
+The output preserves decisions, full trades, daily cash/quantity/equity, fees,
+impact, turnover and calendar period equity changes for the base/stress and
+buy-and-hold cases. Drawdown uses daily sampled equity and terminal liquidation;
+it is not an intraday risk bound. Costs are explicit assumptions, and exchange
+lot-size rounding is not modeled. Zero cash yield is assumed. Passing a screen
+still does not approve trading. The operator's data are not available in CI;
+causal fixtures test delayed open fills, missing-minute rejection, no unnecessary
+rebalance, affordable stress sizing and component reconciliation.

@@ -62,5 +62,6 @@ descriptive; further short-capture repetition is not an active task.
 [WBC01](WEEKLY_BTC_CONTROL.md) defines one weekly BTC spot momentum control using
 previously used development data. It is motivated by primary historical research
 and addresses a different holding horizon, with explicit costs and baselines.
-It is protocol-only: no implementation result, candidate or promotion exists.
+The fixed implementation and causal/accounting fixtures are available; no market
+result, candidate or promotion exists yet.
 It does not replace the original scalping goal with a claim of weekly success.
