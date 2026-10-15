@@ -64,3 +64,37 @@ execution-latency treatment and a predeclared prospective evaluation. If those
 conditions cannot plausibly fit the expected effect, do not spend more collection
 or GPU time on that hypothesis. This review closes the diagnostic task; it does
 not claim the overall trading-bot goal is complete.
+
+## Completed cost sensitivity — operator results, 2026-10-15 UTC
+
+The operator applied `diagnose_basis_costs.py` to all three existing captures.
+Hypothetical rates were 10 bps per spot execution, 5 bps per futures execution,
+and zero additional slippage. Four commissions use their respective assumed
+fill notionals. Funding, financing and borrow remain excluded. The supplied
+pooling script checked matching assumptions and implementation hashes; this
+repository records pasted outputs, not an independent raw-data reproduction.
+
+| Horizon | Long futures / short spot mean subtotal bps | Long spot / short futures mean subtotal bps |
+|---|---:|---:|
+| 5 seconds | -29.94442 | -30.27878 |
+| 15 seconds | -29.67485 | -30.50160 |
+| 30 seconds | -29.17898 | -31.01087 |
+| 60 seconds | -30.01881 | -30.16000 |
+
+Every cell has twelve observations and zero positive subtotals. The eight cells
+reuse the same anchors and are not 96 independent observations. All amounts are
+arithmetic bps of entry spot notional, not return on capital or actual portfolio
+P&L. The best displayed pooled subtotal is still negative before the omitted
+components. No fee rates were verified by this experiment.
+
+Disposition: cost-scenario evaluation complete, no candidate advanced. The
+reported outcomes do not justify further captures, fitting, choosing the best
+horizon, switching to its apparently better direction, or assuming maker fills
+to reduce costs. Maker execution would need its own fill/queue/adverse-selection
+model and a new economic hypothesis; a fee-rate substitution is insufficient.
+This does not prove every basis strategy fails at every cost schedule.
+
+The reusable deliverables are bounded capture, integrity replay, fixed sampling
+and explicit four-execution accounting. The next strategy research must begin
+with a new predeclared hypothesis and plausible all-in economics; the absence of
+one is a research blocker, not a reason to launch another arbitrary experiment.

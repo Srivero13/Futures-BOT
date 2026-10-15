@@ -23,7 +23,7 @@ Software validation and economic evidence are separate requirements.
 |---|---|---|
 | UM01 | 194 trades over two separate August runs; summed net -26.111688 USDT | Closed, rejected development; not a continuous portfolio |
 | UM02 | 93 trades; net -7.568643 USDT; best-trade removal and extra-impact tests negative | Rejected development |
-| BASIS-Q01 | Three consecutive live pilots; 12 common anchors per horizon; largest pooled quote-reference mean +0.81069 bps before fees | Diagnostic complete; no candidate advanced |
+| BASIS-Q01 | Three live pilots; 12 anchors per horizon; all eight cost-scenario means negative (-29.17898 to -31.01087 bps), zero positive subtotals; hypothetical fees | Cost-scenario evaluation complete; no candidate advanced |
 | BASIS-D01 | 10,080 aligned candle minutes; 167 common anchors; small basis changes, no executable quotes | Diagnostic complete; no strategy advanced |
 
 See [UM01 closure](USDM_UM01_CLOSURE.md), [UM02 protocol](USDM_UM02_PROTOCOL.md)
