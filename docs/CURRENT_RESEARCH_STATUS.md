@@ -1,4 +1,4 @@
-# Current research checkpoint — 2026-10-14 UTC
+# Current research checkpoint — 2026-10-15 UTC
 
 No strategy is approved and no profitable deployment has been established.
 Software validation and economic evidence are separate requirements.
@@ -23,6 +23,7 @@ Software validation and economic evidence are separate requirements.
 |---|---|---|
 | UM01 | 194 trades over two separate August runs; summed net -26.111688 USDT | Closed, rejected development; not a continuous portfolio |
 | UM02 | 93 trades; net -7.568643 USDT; best-trade removal and extra-impact tests negative | Rejected development |
+| BASIS-Q01 | Three consecutive live pilots; 12 common anchors per horizon; largest pooled quote-reference mean +0.81069 bps before fees | Diagnostic complete; no candidate advanced |
 | BASIS-D01 | 10,080 aligned candle minutes; 167 common anchors; small basis changes, no executable quotes | Diagnostic complete; no strategy advanced |
 
 See [UM01 closure](USDM_UM01_CLOSURE.md), [UM02 protocol](USDM_UM02_PROTOCOL.md)
@@ -51,3 +52,7 @@ There is no active overnight training job required by this checkpoint. Repeating
 completed controls or searching more variants on August cannot supply missing
 execution evidence. The remaining work is research design and suitable data,
 followed by execution/risk validation if a candidate earns that progression.
+
+The [live basis pilot review](BASIS_QUOTE_PILOT_REVIEW.md) preserves all eight
+predefined direction/horizon results. Its evidence is operator-reported and
+descriptive; further short-capture repetition is not an active task.
