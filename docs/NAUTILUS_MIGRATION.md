@@ -72,8 +72,12 @@ database or changes approved-model flags. The only strategy registered in
 account balance is entirely synthetic. No exchange client is initialized.
 
 These are engineering tests, not proof of parity between the current model and
-Nautilus execution. No real-data conversion throughput or CPU/latency
-benchmarks have been claimed yet. Compare identical input hashes and include
+Nautilus execution. The audit and replay JSON now include `source_parse_seconds`,
+`native_event_build_seconds`, `native_run_seconds` and dispatched bars/second.
+These are wall-clock measurements on the executing host and include a slow,
+Python-based feature-parity observer: they are **not** end-to-end order latency
+or an apples-to-apples legacy-engine comparison. No real-data benchmark has
+been claimed yet. Compare identical input hashes and include
 parser time, native event processing time, peak RSS and per-run count/ordering
 before claiming performance improvement.
 
