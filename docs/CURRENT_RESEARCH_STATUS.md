@@ -73,3 +73,9 @@ The operator's minute risk replay reconciled all scenarios (base sampled
 [WBC01-F01 prospective protocol](WEEKLY_BTC_FORWARD.md) and local registration
 command are available for October 26, 2026–April 26, 2027 UTC. Registration and
 future evaluation are pending; no scheduler, orders or promotion are started.
+
+The operator registered WBC01-F01 at 2026-10-21T03:56:33.635458+00:00, before its
+fixed evaluation start. The consolidated evaluator is implemented: one command
+validates the binding, builds signals, applies costs, replays risk and reports
+results after the registered interval. A readiness-only mode is available now.
+This reduces manual work; it does not shorten the calendar or validate scalping.

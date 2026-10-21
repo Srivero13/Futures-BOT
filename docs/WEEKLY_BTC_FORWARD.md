@@ -50,3 +50,38 @@ Public archived candles can be acquired later; there is no requirement to keep a
 PC running for six months. Such replay remains an assumed-cost reference test,
 not evidence of actual fills. The frozen snapshot copies code/reports, not the
 large source CSVs: preserve the source data referenced by the development report.
+
+## Consolidated evaluator
+
+`evaluate_weekly_btc_forward.py` now implements one registered evaluation command.
+It pins the published forward plan hash, revalidates the development snapshot,
+and requires the current strategy, risk replay and dataset helper hashes to
+match the frozen copies. It refuses interim performance evaluation before the
+fixed end date. It does not dynamically execute code from snapshot paths.
+
+Readiness can be checked now without reading market data:
+
+```bash
+.venv/bin/python evaluate_weekly_btc_forward.py \
+  --registration data/weekly-btc-WBC01-forward-registration.json --check
+```
+
+Expected before April 26, 2027: `waiting_for_fixed_window_end`. This is a readiness
+check, not a running job or a profitable strategy result.
+
+After the fixed window ends, supply the complete canonical BTCUSDT one-minute
+CSV shards and provenance sidecars covering the warmup and evaluation interval.
+Use `--registration`, `--files` and a new `--output` path. The evaluator performs
+source hash/identity checks, chronological completeness checks, fixed-rule signal
+construction, base/stress/buy-and-hold accounting, minute risk replay and terminal
+reconciliation in one run. No separate attribution commands are required.
+Full October and April monthly shards are accepted, with edge minutes unscored;
+September and unrelated shards are rejected. April monthly data may not be
+available until month end; suitable nonoverlapping daily shards can also supply
+the interval. No automatic download is performed.
+
+Output remains unapproved even when the economic screen passes. The sample size
+and concentration limitations must be reviewed; this command supplies no
+statistical significance or actual execution evidence. Preserve the registration
+and source shards. Failed or missing data must be repaired without moving dates,
+changing rules or reclassifying the evaluation as development to hide a failure.
