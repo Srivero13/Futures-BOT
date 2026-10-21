@@ -36,6 +36,7 @@ class NautilusBridgeTests(unittest.TestCase):
             self.assertEqual(main(['--mode', 'audit', '--files', str(path)]), 0)
         result = json.loads(output.getvalue())
         self.assertEqual(result['bars'], 3)
+        self.assertGreaterEqual(result['source_parse_seconds'], 0)
         self.assertEqual(result['missing_minutes'], 0)
         self.assertEqual(result['last_close_ns'], (START + 180) * 1000000000)
         self.assertEqual(result['first_open_s'], START)
