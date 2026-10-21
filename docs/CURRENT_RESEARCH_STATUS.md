@@ -67,3 +67,9 @@ The operator reports 37 trades and a passed original development screen: base ne
 the partial 2026 result is negative. Minute reference risk replay is now available;
 independent validation and promotion have not occurred.
 It does not replace the original scalping goal with a claim of weekly success.
+
+The operator's minute risk replay reconciled all scenarios (base sampled
+3.70737%, OHLC upper bound 3.72598%). A separate
+[WBC01-F01 prospective protocol](WEEKLY_BTC_FORWARD.md) and local registration
+command are available for October 26, 2026–April 26, 2027 UTC. Registration and
+future evaluation are pending; no scheduler, orders or promotion are started.

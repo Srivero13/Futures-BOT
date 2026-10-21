@@ -1,0 +1,33 @@
+{
+  "experiment": "WBC01-F01",
+  "version": 1,
+  "approved": false,
+  "status": "prospective_protocol_requires_local_registration",
+  "parent_experiment": "WBC01",
+  "rule_protocol_sha256": "cadb03783056b7f4a17dd043210be015641d5e34f0dcb0f7dc6991d94631c74f",
+  "evaluation_start_utc": "2026-10-26T00:00:00+00:00",
+  "evaluation_end_exclusive_utc": "2027-04-26T00:00:00+00:00",
+  "warmup_start_utc": "2026-10-18T23:59:00+00:00",
+  "terminal_reference_utc": "2027-04-25T23:59:00+00:00",
+  "initial_state": "Separate 1000 USDT cash account, no inherited position",
+  "rule": "Unchanged WBC01 weekly rule and 100 USDT entry budget",
+  "costs": "Unchanged hypothetical 10 bps fee and 2 bps impact per execution; stress impact 3 bps",
+  "baselines": ["cash", "buy_and_hold_same_initial_quote_budget"],
+  "configuration_budget": 1,
+  "review_policy": {
+    "scheduled_review": "After the complete fixed interval and input integrity checks",
+    "interim_use": "Operational integrity monitoring only; no tuning or early success decision",
+    "report": ["net_pnl", "stress_net_pnl", "closed_trades", "net_excluding_best_trade", "minute_drawdown", "ohlc_drawdown_bound", "exposure", "buy_and_hold", "period_equity_changes"],
+    "economic_screen": "Base net, stressed net and base net excluding best trade must each be positive to merit further review",
+    "insufficient_evidence": "Few trades or concentrated outcomes remain inconclusive even if the economic screen passes",
+    "promotion": "None automatic; no statistical power or live profitability claim",
+    "failure": "Preserve result; do not retune on this evaluation window"
+  },
+  "september_reserve": "Not opened by this protocol",
+  "limitations": [
+    "Prospective relative to registration, not statistically independent observations or regimes.",
+    "Historical public candle replay with assumed costs is not live paper execution.",
+    "26 weeks is a fixed observation budget, not a guarantee of sufficient trades or completion of the original scalping goal.",
+    "No orders, credentials, leverage, or background process are started."
+  ]
+}
