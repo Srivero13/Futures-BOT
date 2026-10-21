@@ -5,6 +5,7 @@ from pathlib import Path
 
 from download_v15_data import save_shard
 from integrations.nautilus_bridge import load, replay
+from integrations.nautilus_shadow import from_candles
 
 
 class NativeReplayTests(unittest.TestCase):
@@ -20,6 +21,8 @@ class NativeReplayTests(unittest.TestCase):
             result = replay(candles, 'BTCUSDT')
             self.assertTrue(result['nautilus_engine_executed'])
             self.assertEqual(result['dispatched_bars'], len(candles))
+            self.assertEqual(result['feature_windows'], 6)
+            self.assertEqual(result['feature_sha256'], from_candles(candles)['feature_sha256'])
 
 
 if __name__ == '__main__':
