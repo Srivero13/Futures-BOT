@@ -8,6 +8,8 @@ import unittest
 
 from download_v15_data import save_shard
 from integrations.nautilus_bridge import load, main, validated_shards
+from integrations.nautilus_shadow import from_candles
+from engine_v1.model import feature_matrix
 
 START = 1704067200  # 2024-01-01 00:00:00 UTC
 
@@ -118,6 +120,29 @@ class NautilusBridgeTests(unittest.TestCase):
                 path.with_suffix('.json').write_text(json.dumps(meta))
                 with self.assertRaisesRegex(ValueError, error):
                     load([path])
+
+    def test_shadow_feature_warmup_and_gap_reset(self):
+        path = self.shard('continuous.csv', seconds=[START + 60*i for i in range(23)])
+        values, _, _ = load([path])
+        result = from_candles(values)
+        self.assertEqual(result['feature_windows'], 3)
+        self.assertEqual(result['feature_resets'], 0)
+        # Legacy online scoring uses precisely the last 21 closed candles.
+        features = feature_matrix([
+            {'timestamp': v.open_second * 1000, 'open': str(v.open),
+             'high': str(v.high), 'low': str(v.low),
+             'close': str(v.close), 'volume': str(v.volume)} for v in values[:21]
+        ])[-1]
+        import hashlib
+        record = str(values[20].close_ns) + ':' + '|'.join(float(x).hex() for x in features) + '\n'
+        self.assertEqual(from_candles(values[:21])['feature_sha256'],
+                         hashlib.sha256(record.encode('ascii')).hexdigest())
+        gap_path = self.shard('gap.csv', seconds=[START + 60*i for i in range(23)]
+                              + [START + 60*i for i in range(27, 30)])
+        gap_values, gaps, _ = load([gap_path], allow_gaps=True)
+        self.assertEqual(gaps, 4)
+        self.assertEqual(from_candles(gap_values)['feature_windows'], 3)
+        self.assertEqual(from_candles(gap_values)['feature_resets'], 1)
 
     def test_absent_source_is_rejected(self):
         with self.assertRaisesRegex(ValueError, 'At least one'):
