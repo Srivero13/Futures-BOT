@@ -22,6 +22,9 @@ class NativeReplayTests(unittest.TestCase):
             self.assertTrue(result['nautilus_engine_executed'])
             self.assertEqual(result['dispatched_bars'], len(candles))
             self.assertEqual(result['feature_windows'], 6)
+            self.assertGreaterEqual(result['native_event_build_seconds'], 0)
+            self.assertGreaterEqual(result['native_run_seconds'], 0)
+            self.assertGreater(result['native_dispatched_bars_per_second'], 0)
             self.assertEqual(result['feature_sha256'], from_candles(candles)['feature_sha256'])
 
 
