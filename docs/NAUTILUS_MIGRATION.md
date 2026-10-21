@@ -89,7 +89,10 @@ before claiming performance improvement.
 | Frozen WBC01-F01 | Keep separate until its already registered window closes |
 
 1. **Milestone 1**: offline audit, native counting replay, source integrity,
-   close timestamps, no-orders guarantee and isolated tests.
+   close timestamps, no-orders guarantee and isolated tests. The native replay
+   also verifies SHA-256 fingerprints of all six original causal features on
+   each fully warmed 21-candle window. Gaps reset the feature window.
+   This verifies event-to-feature parity, not model economic validity.
 2. **Milestone 2**: deterministic parity harness with identical strategies and
    causal decision times, independent simulated fee/impact reconciliation,
    gap/reset handling, runtime and memory benchmarking.
