@@ -12,6 +12,7 @@ import importlib.metadata
 import json
 from pathlib import Path
 import re
+import time
 
 VERSION = '2.0.0rc7'
 SYMBOLS = {'BTCUSDT': 'BTC', 'ETHUSDT': 'ETH'}
@@ -178,11 +179,13 @@ def replay(candles, symbol):
                 close=bar.close, volume=bar.volume,
             )
 
+    build_start = time.perf_counter()
     bars = [Bar(bar_type=bar_type,
                 open=Price.from_str(f'{c.open:.8f}'), high=Price.from_str(f'{c.high:.8f}'),
                 low=Price.from_str(f'{c.low:.8f}'), close=Price.from_str(f'{c.close:.8f}'),
                 volume=Quantity.from_str(f'{c.volume:.8f}'),
                 ts_event=c.close_ns, ts_init=c.close_ns) for c in candles]
+    event_build_s = time.perf_counter() - build_start
     engine = BacktestEngine(BacktestEngineConfig(logging=LoggerConfig(stdout_level=LogLevel.ERROR)))
     observer = ObserveOnly()
     try:
@@ -193,14 +196,20 @@ def replay(candles, symbol):
         engine.add_instrument(instrument)
         engine.add_data(bars)
         engine.add_strategy(observer)
+        run_start = time.perf_counter()
         engine.run()
+        engine_run_s = time.perf_counter() - run_start
         if observer.seen != len(candles) or observer.last_ts != candles[-1].close_ns:
             raise ValueError('Nautilus replay parity failure: missing/out-of-order bars')
         actual_features = observer.shadow.result()
         if actual_features != expected_features:
             raise ValueError('Nautilus feature parity failure: causal input differs from legacy engine')
         return {'nautilus_engine_executed': True, 'nautilus_version': installed,
-                'dispatched_bars': observer.seen, **actual_features}
+                'dispatched_bars': observer.seen,
+                'native_event_build_seconds': round(event_build_s, 6),
+                'native_run_seconds': round(engine_run_s, 6),
+                'native_dispatched_bars_per_second': round(observer.seen / engine_run_s, 2) if engine_run_s > 0 else None,
+                **actual_features}
     finally:
         engine.dispose()
 
@@ -213,10 +222,13 @@ def main(argv=None):
     parser.add_argument('--allow-gaps', action='store_true')
     parser.add_argument('--max-bars', type=int, default=50000)
     args = parser.parse_args(argv)
+    parse_start = time.perf_counter()
     data, gaps, sources = load(args.files, args.symbol, allow_gaps=args.allow_gaps, max_bars=args.max_bars)
+    parse_seconds = time.perf_counter() - parse_start
     result = {'mode': args.mode, 'approved': False, 'real_orders': False, 'paper_orders': False,
               'symbol': args.symbol, 'source_venue': 'binance', 'simulation_venue': 'RESEARCH',
               'bars': len(data), 'missing_minutes': gaps, 'sources': sources,
+              'source_parse_seconds': round(parse_seconds, 6),
               'first_open_s': data[0].open_second, 'last_close_ns': data[-1].close_ns,
               'timestamp_rule': 'one-minute Binance open UTC seconds mapped to close UTC nanoseconds',
               'nautilus_engine_executed': False}
