@@ -122,8 +122,12 @@ class NautilusBridgeTests(unittest.TestCase):
     def test_absent_source_is_rejected(self):
         with self.assertRaisesRegex(ValueError, 'At least one'):
             load([])
-        with self.assertRaisesRegex(ValueError, 'provenance'):
+        with self.assertRaisesRegex(ValueError, 'canonical'):
             load([self.root / 'missing.csv'])
+        bare = self.root / 'bare.csv'
+        bare.write_text('timestamp,open,high,low,close,volume\n')
+        with self.assertRaisesRegex(ValueError, 'provenance'):
+            load([bare])
 
 
 if __name__ == '__main__':
