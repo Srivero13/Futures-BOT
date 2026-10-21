@@ -127,7 +127,9 @@ def load(paths, symbol='BTCUSDT', *, allow_gaps=False, max_bars=50000):
 
 
 def replay(candles, symbol):
-    """Run the actual Nautilus v2 event engine with a counting-only strategy."""
+    """Run the Nautilus v2 event engine; verify causal feature parity, no orders."""
+    from integrations.nautilus_shadow import ShadowDigest, from_candles
+    expected_features = from_candles(candles)
     try:
         installed = importlib.metadata.version('nautilus_trader')
     except importlib.metadata.PackageNotFoundError as exc:
@@ -160,6 +162,7 @@ def replay(candles, symbol):
             super().__init__(StrategyConfig())
             self.seen = 0
             self.last_ts = 0
+            self.shadow = ShadowDigest()
 
         def on_start(self):
             self.subscribe_bars(bar_type)
@@ -169,6 +172,11 @@ def replay(candles, symbol):
                 raise ValueError('Nautilus dispatched bars out of order')
             self.last_ts = bar.ts_init
             self.seen += 1
+            self.shadow.accept(
+                int(bar.ts_init // 1_000_000_000) - 60,
+                open=bar.open, high=bar.high, low=bar.low,
+                close=bar.close, volume=bar.volume,
+            )
 
     bars = [Bar(bar_type=bar_type,
                 open=Price.from_str(f'{c.open:.8f}'), high=Price.from_str(f'{c.high:.8f}'),
@@ -188,8 +196,11 @@ def replay(candles, symbol):
         engine.run()
         if observer.seen != len(candles) or observer.last_ts != candles[-1].close_ns:
             raise ValueError('Nautilus replay parity failure: missing/out-of-order bars')
+        actual_features = observer.shadow.result()
+        if actual_features != expected_features:
+            raise ValueError('Nautilus feature parity failure: causal input differs from legacy engine')
         return {'nautilus_engine_executed': True, 'nautilus_version': installed,
-                'dispatched_bars': observer.seen}
+                'dispatched_bars': observer.seen, **actual_features}
     finally:
         engine.dispose()
 
