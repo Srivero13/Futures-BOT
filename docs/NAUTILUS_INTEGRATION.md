@@ -58,3 +58,45 @@ Live clients and credentials are outside this milestone.
 
 The official website may show 2.x examples. This integration was exercised
 against the installed 1.231.0 API; do not mix those APIs or upgrade silently.
+
+## Historical candle replay
+
+```bash
+.venv-nautilus/bin/python -m integrations.nautilus.historical \
+  --csv data/market-expanded/binance-ETHUSDT-2026-08.csv \
+  --symbol ETHUSDT --date 2026-08-01 \
+  --output "data/nautilus-historical-$(date -u +%Y%m%dT%H%M%SZ).json"
+```
+
+The adjacent .json provenance sidecar must identify Binance spot, the requested
+symbol, one-minute candles, matching CSV SHA-256, row count and first/last open.
+The whole shard is parsed and its bounds verified. The selected UTC day must
+contain exactly 1440 contiguous minutes. Input hashes are checked again after
+replay. Raw exchange archives are not re-downloaded or independently audited.
+BTCUSDT is also supported. Requested days and entire source shards must precede
+the frozen September 1, 2026 development boundary.
+
+Canonical CSV open timestamps (seconds) become Nautilus bar event/init timestamps
+at candle close (nanoseconds). Each strategy callback is checked against that
+close time and every OHLCV value contributes to the replay digest. Prices must
+fit two decimals and volume eight decimals exactly; rounding is rejected.
+The instrument is for data conversion only, not historical exchange filters.
+Bar execution is disabled and the observer has no order-generation code.
+
+The success status is historical_replay_passed. This verifies data delivery,
+not a backtest of a strategy. Local tests use generated data; run the command
+above to check the operator's actual dataset.
+
+## Initial integration milestones
+
+1. Offline accounting parity: passed locally and reported passed by operator.
+2. Historical data replay: implemented and fixture-tested; operator-data result pending.
+3. Public-feed observation: implement and validate freshness/reconnect handling.
+4. Two-account simulated operation: validate isolation, global risk, stale-data
+   entry blocking and recovery under an integrated acceptance run.
+
+One of four operator-validated milestones is complete (25% by milestone count).
+These milestones are not equal effort and do not measure whole-project completion,
+strategy profitability, live-execution readiness or remaining calendar time.
+A validated strategy, actual execution constraints and live operational controls
+remain separate requirements. Existing frozen forward research is unchanged.
