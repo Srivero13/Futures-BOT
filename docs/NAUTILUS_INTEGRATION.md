@@ -90,13 +90,54 @@ above to check the operator's actual dataset.
 ## Initial integration milestones
 
 1. Offline accounting parity: passed locally and reported passed by operator.
-2. Historical data replay: implemented and fixture-tested; operator-data result pending.
+2. Historical data replay: passed locally and on operator ETHUSDT data for August 1, 2026.
 3. Public-feed observation: implement and validate freshness/reconnect handling.
 4. Two-account simulated operation: validate isolation, global risk, stale-data
    entry blocking and recovery under an integrated acceptance run.
 
-One of four operator-validated milestones is complete (25% by milestone count).
+Two of four operator-validated milestones are complete (50% by milestone count).
 These milestones are not equal effort and do not measure whole-project completion,
 strategy profitability, live-execution readiness or remaining calendar time.
 A validated strategy, actual execution constraints and live operational controls
 remain separate requirements. Existing frozen forward research is unchanged.
+
+
+## Public quote observation (milestone 3)
+
+```bash
+.venv-nautilus/bin/python -m integrations.nautilus.observe \
+  --seconds 300 \
+  --output-dir "data/nautilus-observe-$(date -u +%Y%m%dT%H%M%SZ)"
+```
+
+This uses the installed Nautilus Binance SPOT data adapter for BTCUSDT and ETHUSDT.
+No execution factory is registered, exec_clients is empty, and key/secret are None.
+An Actor subscribes to quotes; there is no trading Strategy or order submission.
+No credentials are required. A warning about absent execution clients is expected.
+
+The process runs for 300 seconds including startup, then stops. Progress prints
+approximately every ten seconds. Artifacts: run.json (supervisor outcome),
+health.json (latest observation), observation.json (completed worker checks), and
+adapter.log (upstream warnings/errors). If startup or shutdown fails, observation.json
+may be absent; run.json and adapter.log remain the diagnostics. Existing run
+directories are refused. A parent process terminates a stuck worker after the
+requested duration plus 60 seconds, escalating to SIGKILL after five seconds.
+The log budget is 64 MiB, checked every ten seconds (so slight overshoot is possible).
+
+Freshness uses local monotonic receipt time, sampled once per second, with a fixed
+one-second maximum age after a 60-second startup allowance. Missing either symbol
+is stale. All stale samples are retained even when freshness recovers. A local
+wall/monotonic drift greater than 250 ms is latched as a clock failure. Bad/crossed
+quotes are counted and rejected. Final checks require both symbols, no stale
+samples after warmup, valid quotes, stable clock, no orders and clean shutdown.
+This intentionally does not relax the criterion after a disconnection.
+
+Observed freshness recovery is not a socket reconnect count. The adapter handles
+its own transport; inspect adapter.log for its errors. Passing observation checks
+does not certify error-free transport or continuous subsecond coverage. Recovery
+needs an explicit interruption exercise before milestone 3 is complete.
+
+Local validation builds the real data-only node without connecting and tests
+staleness/recovery, clock jumps, invalid quotes and supervision failures. The
+live Binance run must be verified on the operator's network. This is not a
+five-hour training job and does not modify frozen research or market datasets.
