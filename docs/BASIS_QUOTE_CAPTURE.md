@@ -84,3 +84,79 @@ pairs, not every decision the recorder made about omitted pairs.
 Synthetic tests cover correct replay and rejection of hash damage, inconsistent
 rehashed pair ages and embedded quotes, stale pairs, duplicate pairs, count
 mismatches and unexpected part paths. Operator captures are audited separately.
+
+## Queue pressure and writer overhead
+
+`Full` in a feed error means the shared 4096-record queue overflowed. It does not
+identify a network outage. The capture fails and the chained audit is skipped;
+keep the partial folder and use a new folder for a retry. The queue limit and
+250 ms freshness rule are unchanged; no quotes are silently dropped to recover.
+
+The quote-specific writer probes free disk space before its first write and
+before another 1 MiB would be written since the previous probe. It subtracts all
+intervening bytes from the cached free-space value and probes again near the
+1 GiB reserve. This removes a filesystem probe from every record. Other processes
+can consume disk space between probes; this reserve is not a disk reservation.
+Write errors still stop the capture. Rotation, hashes and per-record byte limits
+remain in effect. The existing market recorder is unchanged.
+
+Progress includes current queue occupancy. The summary includes the observed
+queue high-water mark (sampling can miss the actual peak), maximum queue wait for
+consumed quotes, and an explicit overflow flag. Queue wait is measured from the
+application receipt timestamp and does not measure network latency. A synthetic
+10,000-record test checks preservation, rotation, hashes and reduced probe calls;
+it does not certify live throughput on the operator's machine.
+
+## Descriptive bid/ask basis
+
+Run `describe_basis_quotes.py --capture CAPTURE --output CAPTURE/basis-description.json`
+after capture. It reruns the integrity/replay audit before reading the saved pairs
+and checks source hashes again afterward. Output paths must be new.
+
+Sampling is fixed: first valid recorded pair in each one-second bucket relative
+to the first pair. Subsequent pairs in that bucket are ignored, without looking
+at their prices. Missing buckets are not filled. This limits event-rate weighting
+but does not establish statistical independence. Coverage spans first to last
+pair only; it does not measure start/end periods without valid pairs.
+
+Metrics are 10,000 times natural log ratios:
+
+- Midpoint basis: futures midpoint / spot midpoint.
+- Lower bid/ask basis: futures bid / spot ask.
+- Upper bid/ask basis: futures ask / spot bid.
+- Each market's spread: ask / bid.
+
+Means and nearest-rank 5th, 50th and 95th percentiles summarize sampled levels.
+Lower and upper basis are price observations for different sides, not profits
+from an opening and closing trade. Even positive differences do not establish
+executable arbitrage: asynchronous receipts, fills, depth, fees, funding,
+borrowing, inventory and legging remain unmodeled. No thresholds are fitted,
+trades selected or model approved. This pilot is descriptive development data.
+
+## Fixed-horizon quote changes
+
+`diagnose_basis_changes.py --capture CAPTURE --output CAPTURE/basis-changes.json`
+reruns the audit, streams the saved pairs and verifies input hashes again.
+Anchors lie on a 60-second grid starting at the first valid pair. An anchor uses
+the first available pair within 250 ms of its grid time, only after the previous
+anchor is resolved. Labels use the first pair at or after actual entry plus
+5, 15, 30 or 60 seconds, with a maximum 250 ms lateness. No missing quote is
+filled in. Only anchors complete at all four horizons enter any horizon summary.
+The tail and late/incomplete anchors are excluded and counted. A five-minute
+capture gives only a handful of observations, not strategy evidence.
+
+For equal hypothetical one-ETH legs, quote-reference changes are:
+
+- Long futures / short spot: futures exit bid minus entry ask, plus spot entry
+  bid minus exit ask.
+- Long spot / short futures: spot exit bid minus entry ask, plus futures entry
+  bid minus exit ask.
+
+Values are divided by entry spot midpoint and multiplied by 10,000. They are
+arithmetic basis points of that reference notional, not log-bps or return on
+portfolio capital. An unchanged discount loses both legs' spreads. No fee,
+slippage, funding, borrow, inventory, legging, margin or liquidation model is
+included. Short spot is hypothetical and requires inventory or borrowing in
+practice. These asynchronous quotes are not guaranteed fills. Both directions
+and all predefined horizons are reported; do not select a strategy from this
+pilot or treat positive reference changes as profitability approval.

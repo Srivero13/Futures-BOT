@@ -123,3 +123,10 @@ Progress is flushed to stderr; the final JSON and existing paper trade events re
 To update, let any existing observation or training session finish first, then run `git pull --ff-only origin develop` from the checkout. Publishing to GitHub does not update another computer or change its running process. Progress appears on the next launch; current model artifacts, training code, and datasets are unaffected by this patch.
 
 In 1.6.2, a socket read timeout at or after the requested finite-session deadline ends the session normally. Earlier timeouts still count as failures and trigger recovery; continuous sessions have no deadline exemption. Previous versions could count the normal final read expiry as a timeout/reconnect. Other connection failures are not suppressed.
+
+## Integrated host acceptance
+
+Use [System acceptance](SYSTEM_ACCEPTANCE.md) for a single 30-minute host check
+covering startup, isolated two-account paper accounting/recovery, and the public
+feed. The result distinguishes engineering checks from strategy approval; no
+real or model-driven paper orders are enabled by this command.
