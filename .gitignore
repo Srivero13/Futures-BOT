@@ -20,3 +20,6 @@ results/*.csv
 reports/v1/*-trades.json
 FLATTEN
 reports/v1.1/*-trades.json
+
+# Isolated NautilusTrader environment
+.venv-nautilus/

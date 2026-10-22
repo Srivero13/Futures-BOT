@@ -1,0 +1,2 @@
+# Isolated Python 3.12 environment. Do not install into the research/GPU venv.
+nautilus_trader==1.231.0

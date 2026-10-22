@@ -317,3 +317,10 @@ breakouts with causal timing and fixed cost stress; it cannot approve live tradi
 
 [Continuous integration](docs/CI.md) runs offline startup checks and the full CPU
 regression suite on pushes and pull requests, preserving diagnostic logs.
+
+### NautilusTrader integration
+
+An isolated, pinned NautilusTrader environment now runs a real offline engine
+control against our existing Decimal paper ledger. See
+[setup and migration boundaries](docs/NAUTILUS_INTEGRATION.md).
+This first milestone verifies synthetic spot accounting; it does not enable live orders.
