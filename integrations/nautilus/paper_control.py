@@ -57,7 +57,7 @@ class Admission:
         self.exits_pending.discard(account)
 
 
-def run():
+def run(gate=None):
     if version('nautilus_trader') != '1.231.0':
         raise ValueError('Expected NautilusTrader 1.231.0')
     from nautilus_trader.backtest.engine import BacktestEngine
@@ -70,7 +70,9 @@ def run():
     from nautilus_trader.model.objects import Money, Price, Quantity
     from nautilus_trader.trading.strategy import Strategy
 
-    gate = Admission()
+    gate = Admission() if gate is None else gate
+    if gate.reserved or gate.seen:
+        raise ValueError("Paper fixture requires a fresh admission state")
     ids = {a: InstrumentId.from_str('ETHUSDT.SIM'+a) for a in ('A', 'B')}
     instruments = [CurrencyPair(instrument_id=iid, raw_symbol=Symbol('ETHUSDT'),
         base_currency=ETH, quote_currency=USDT, price_precision=2, size_precision=6,

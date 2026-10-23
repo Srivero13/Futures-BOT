@@ -208,3 +208,36 @@ retain reservations conservatively and need lifecycle handling before live-feed
 paper integration. It is not wired to the public observer or a real exchange
 execution client. Milestone 4 remains in progress until integrated operation,
 risk controls and restart behavior are validated.
+
+## Durable admission and restart control
+
+```bash
+.venv-nautilus/bin/python -m integrations.nautilus.restart_control \
+  --output-dir "data/nautilus-restart-$(date -u +%Y%m%dT%H%M%SZ)"
+```
+
+The control creates its own SQLite journals. A subprocess commits two entry
+reservations, duplicate IDs, a pause and a pending exit, then deliberately exits
+without closing SQLite. The parent reopens the journal and verifies all of that
+state. Old receipt timestamps are intentionally discarded. If reservations remain,
+all requests are blocked with restart_reconciliation_required, even after fresh
+quotes and unpause. There is no automatic release or retry of uncertain orders.
+
+It then runs the actual two-account Nautilus fixture using a separate durable
+journal, checks fills and balances, and reopens that completed journal to verify
+flat reservation state and retained duplicate IDs. The report status is
+durable_paper_control_passed; it should finish in seconds.
+
+The journal uses SQLite WAL with synchronous=FULL, a single-writer file lock,
+and atomic state plus audit transactions. Admission is committed before its caller
+can submit an order. Failed audit writes roll back the reservation and in-memory
+state. Existing malformed state fails closed rather than being reset. The stored
+policy ID binds this fixed account120/global150 engineering policy.
+
+This persists the admission controller only. It does not restore Nautilus cash,
+orders, positions, or trade history, and is not a complete paper-bot restart
+solution. A nonflat journal remains blocked until a future explicit reconciliation
+implementation can verify engine state. The crash control tests process exit and
+SQLite recovery, not power loss. Partial/rejected order handling, engine-state
+reconciliation and live-feed integration remain required before unattended paper
+operation. Existing historical research and the original paper ledger are untouched.
