@@ -175,3 +175,36 @@ The report never calls freshness recovery a transport reconnection. It does not
 validate gap backfill or an execution entry gate; no order strategy exists in the
 observer. Transport interruption and integrated paper risk gates remain separate
 acceptance requirements. Do not count this as profitable/live-bot readiness.
+
+## Shared two-account paper admission control
+
+The operator's subscription drill passed: both feeds became stale, then both
+recovered in 2.0048 seconds, with eight quiet samples and no unrelated stale
+samples. Transport-outage validation remains pending.
+
+```bash
+.venv-nautilus/bin/python -m integrations.nautilus.paper_control \
+  --output "data/nautilus-paper-control-$(date -u +%Y%m%dT%H%M%SZ).json"
+```
+
+This offline control runs two simulated spot accounts (SIMA and SIMB) inside
+one Nautilus engine. A shared in-memory admission controller reserves the
+fee-inclusive entry budget before order submission. A maximum 120 USDT per
+entry and 150 USDT across outstanding reservations are fixed engineering values.
+The fixture exercises account and global caps, duplicate admission, operator
+pause, missing/stale opposite-symbol data, and fresh exits while paused.
+Exit reservations remain until full close confirmation; additional pending exits
+are refused. Capacity is not released merely because an exit was requested.
+
+It must produce exactly four fills and zero open positions, with independent
+ending cash of 1000.6989 and 999.70018 USDT. The two simulated venues use synthetic
+prices and hypothetical 10 bps fees. These are engineering controls, not strategy
+performance. The success status is two_account_paper_control_passed.
+
+Important implementation boundary: this controller tracks reserved entry budgets,
+not mark-to-market exposure, drawdown, live margin or liquidation. It is designed
+for one event loop and is not persistent. Unexpected rejected/partial orders
+retain reservations conservatively and need lifecycle handling before live-feed
+paper integration. It is not wired to the public observer or a real exchange
+execution client. Milestone 4 remains in progress until integrated operation,
+risk controls and restart behavior are validated.
