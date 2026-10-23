@@ -141,3 +141,37 @@ Local validation builds the real data-only node without connecting and tests
 staleness/recovery, clock jumps, invalid quotes and supervision failures. The
 live Binance run must be verified on the operator's network. This is not a
 five-hour training job and does not modify frozen research or market datasets.
+
+## Controlled subscription recovery drill
+
+The operator's initial 300-second public observation passed: BTCUSDT 80,170
+quotes and ETHUSDT 56,246; no sampled stale quotes after warmup. This verifies
+that finite run, not an outage recovery or full milestone-3 acceptance.
+
+```bash
+.venv-nautilus/bin/python -m integrations.nautilus.observe \
+  --seconds 180 --recovery-drill \
+  --output-dir "data/nautilus-recovery-$(date -u +%Y%m%dT%H%M%SZ)"
+```
+
+At 90 seconds the actor requests unsubscription of both symbols. Ten seconds
+later it requests resubscription. The fixed protocol requires:
+
+- Both feeds fresh before pause.
+- At least three samples with unchanged counts after a two-second drain allowance.
+- Both symbols visibly stale during the pause.
+- New quotes from both symbols, both fresh, within fifteen seconds after resume.
+- At least thirty seconds observed after recovery and no unrelated stale samples.
+- The normal duration, clock, quote-validity, shutdown and no-order checks.
+
+The independent status is subscription_recovery_passed or subscription_recovery_failed.
+ordinary_observation_checks preserves the original check results: no_stale_samples
+is expected to be false because the gap is deliberate. The ordinary observation
+mode still rejects every stale sample after warmup. The drill does not enable
+orders, change fee assumptions, train models, or alter the host network.
+
+This is an actual subscription interruption, not a forced socket/network outage.
+The report never calls freshness recovery a transport reconnection. It does not
+validate gap backfill or an execution entry gate; no order strategy exists in the
+observer. Transport interruption and integrated paper risk gates remain separate
+acceptance requirements. Do not count this as profitable/live-bot readiness.

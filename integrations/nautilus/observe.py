@@ -71,13 +71,17 @@ def write_json(path, report):
     temp.replace(path)
 
 
-async def observe(node, health, seconds, root):
+async def observe(node, health, seconds, root, observer=None, recovery_drill=False):
+    from .recovery import SubscriptionDrill, assessment
+    drill = SubscriptionDrill() if recovery_drill else None
     task = asyncio.create_task(node.run_async())
     premature = False
     shutdown_ok = False
     try:
         while time.monotonic()-health.started < seconds:
             snapshot = health.sample(time.monotonic(), time.time())
+            if drill is not None:
+                drill.step(time.monotonic()-health.started, snapshot, observer)
             write_json(root/'health.json', dict(running=True, **snapshot))
             elapsed = int(time.monotonic()-health.started)
             if elapsed % 10 == 0:
@@ -105,8 +109,14 @@ async def observe(node, health, seconds, root):
                   clock_stable=final['clock_ok'], valid_quotes=final['invalid_quotes'] == 0,
                   stopped_cleanly=shutdown_ok, no_orders=no_orders)
     write_json(root/'health.json', dict(running=False, **final))
+    observation_checks = checks.copy()
+    drill_report = drill.report(elapsed) if drill is not None else None
+    if drill_report is not None:
+        checks = assessment(observation_checks, drill_report)
+    prefix = 'subscription_recovery' if recovery_drill else 'observation_checks'
     return dict(approved=False, real_orders=False, observe_only=True,
-                status='observation_checks_passed' if all(checks.values()) else 'observation_checks_failed',
+                status=prefix+('_passed' if all(checks.values()) else '_failed'),
+                ordinary_observation_checks=observation_checks, recovery_drill=drill_report,
                 checks=checks, elapsed_seconds=elapsed, health=final,
                 nautilus_version=version('nautilus_trader'),
                 limitations=['No execution clients, account access or orders.',
@@ -116,7 +126,7 @@ async def observe(node, health, seconds, root):
                              'A finite run does not certify 24/7 operation, latency or profitability.'])
 
 
-def worker(seconds, root):
+def worker(seconds, root, recovery_drill=False):
     if version('nautilus_trader') != '1.231.0':
         raise ValueError('Expected NautilusTrader 1.231.0')
     from nautilus_trader.adapters.binance.factories import BinanceLiveDataClientFactory
@@ -127,8 +137,15 @@ def worker(seconds, root):
 
     class QuoteObserver(Actor):
         def on_start(self):
+            self.resume_quotes()
+
+        def resume_quotes(self):
             for symbol in SYMBOLS:
                 self.subscribe_quote_ticks(InstrumentId.from_str(symbol+'.BINANCE'))
+
+        def pause_quotes(self):
+            for symbol in SYMBOLS:
+                self.unsubscribe_quote_ticks(InstrumentId.from_str(symbol+'.BINANCE'))
 
         def on_quote_tick(self, quote):
             health.quote(quote.instrument_id.symbol.value, time.monotonic(),
@@ -139,10 +156,11 @@ def worker(seconds, root):
     asyncio.set_event_loop(loop)
     node = TradingNode(config=config(), loop=loop)
     try:
-        node.trader.add_actor(QuoteObserver())
+        observer = QuoteObserver()
+        node.trader.add_actor(observer)
         node.add_data_client_factory('BINANCE', BinanceLiveDataClientFactory)
         node.build()
-        report = loop.run_until_complete(observe(node, health, seconds, root))
+        report = loop.run_until_complete(observe(node, health, seconds, root, observer, recovery_drill))
     finally:
         node.dispose()
         if not loop.is_closed():
@@ -151,15 +169,16 @@ def worker(seconds, root):
     return 0 if all(report['checks'].values()) else 2
 
 
-def supervise(seconds, root):
+def supervise(seconds, root, recovery_drill=False):
     root.mkdir(parents=True, exist_ok=False)
-    status = dict(approved=False, real_orders=False, status='running', seconds=seconds)
+    status = dict(approved=False, real_orders=False, status='running', seconds=seconds, recovery_drill=recovery_drill)
     write_json(root/'run.json', status)
     process = None
     try:
         with (root/'adapter.log').open('w') as log:
             process = subprocess.Popen([sys.executable, '-u', '-m', 'integrations.nautilus.observe', '--worker',
-                                        '--seconds', str(seconds), '--output-dir', str(root)],
+                                        '--seconds', str(seconds), '--output-dir', str(root)] +
+                                       (['--recovery-drill'] if recovery_drill else []),
                                        stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
             try:
                 deadline = time.monotonic()+seconds+60
@@ -187,7 +206,8 @@ def supervise(seconds, root):
         path = root/'observation.json'
         if code == 0 and path.is_file():
             report = json.loads(path.read_text())
-            if report.get('status') != 'observation_checks_passed':
+            expected_status = 'subscription_recovery_passed' if recovery_drill else 'observation_checks_passed'
+            if report.get('status') != expected_status or not report.get('checks') or not all(report['checks'].values()):
                 raise ValueError('Worker success without passing report')
             status['status'] = 'complete'
         else:
@@ -209,13 +229,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--seconds', type=int, default=300)
     parser.add_argument('--output-dir', type=Path, required=True)
+    parser.add_argument('--recovery-drill', action='store_true',
+                        help='Fixed 10-second subscription pause at 90s; no transport outage')
     parser.add_argument('--worker', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
     if not 120 <= args.seconds <= 21600:
         parser.error('Duration must be 120–21600 seconds')
+    if args.recovery_drill and args.seconds < 180:
+        parser.error('Recovery drill requires at least 180 seconds')
     if args.worker:
-        return worker(args.seconds, args.output_dir.resolve())
-    return supervise(args.seconds, args.output_dir.resolve())
+        return worker(args.seconds, args.output_dir.resolve(), args.recovery_drill)
+    return supervise(args.seconds, args.output_dir.resolve(), args.recovery_drill)
 
 
 if __name__ == '__main__':
